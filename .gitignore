@@ -1,0 +1,19 @@
+# Python sanal ortam ve cache
+venv/
+__pycache__/
+*.pyc
+
+# Calisma-ani / otomatik uretilen dosyalar (kod bunlari yeniden uretir)
+signals.json
+makro.json
+esikler.json
+makro-takvim.json
+olcucu.log
+
+# KISISEL sicil (tahmin gecmisi) - paylasilmaz
+kripto-defter.json
+
+# Test artiklari
+_test_*.json
+_t_*.json
+test-*.json
