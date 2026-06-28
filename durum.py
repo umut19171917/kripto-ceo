@@ -61,6 +61,10 @@ def main():
         t = mk.get("takvim", {})
         if t.get("sonraki"):
             print(f"  sonraki olay: {t['sonraki']} (~{t.get('saat_kala')} saat sonra)")
+        pr = mk.get("piyasa_rejimi")
+        if pr and pr.get("durum"):
+            print(f"  piyasa rejimi: {pr['durum']} (vol x{pr.get('vol_orani')}, "
+                  f"korelasyon {pr.get('korelasyon')}, trend {pr.get('trend')})")
         for n in mk.get("notlar", []):
             print(f"  - {n}")
 

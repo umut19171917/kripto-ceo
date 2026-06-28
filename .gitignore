@@ -6,6 +6,7 @@ __pycache__/
 # Calisma-ani / otomatik uretilen dosyalar (kod bunlari yeniden uretir)
 signals.json
 makro.json
+rejim.json
 esikler.json
 makro-takvim.json
 olcucu.log

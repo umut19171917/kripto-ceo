@@ -184,14 +184,34 @@ def hesapla():
         kapi, carpan = "DIKKAT", min(carpan, 0.5)
         notlar.append(f"DXY risk-off ({rej.get('dxy_24s_pct')}%) -> long bias dikkat")
 
+    # 4) PIYASA REJIMI (D0) — capraz-varlik volatilite + korelasyon.
+    #    Skora KARISMAZ; sadece kapi/boyut/secicilik ayarlar. En kisitlayici kazanir.
+    #    Hata -> sessizce atla -> makro AYNEN eskisi gibi calisir (min_skor taban = 70).
+    piyasa_rejimi, min_skor = None, olcucu.SQUEEZE_FLAG
+    try:
+        import rejim as _rj
+        d0 = _rj.oku_veya_hesapla()
+        gk = _rj.gate_katkisi(d0)
+        _sira = {"ACIK": 0, "DIKKAT": 1, "KAPALI": 2}
+        if _sira.get(gk["kapi"], 0) > _sira.get(kapi, 0):
+            kapi = gk["kapi"]
+        carpan = min(carpan, gk["carpan"])
+        min_skor = gk["min_skor"]
+        notlar.extend(gk["notlar"])
+        piyasa_rejimi = {"durum": d0.get("durum"), "vol_orani": d0.get("vol_orani"),
+                         "korelasyon": d0.get("korelasyon"), "trend": d0.get("trend")}
+    except Exception:
+        pass
+
     if not tak.get("guncel_mi"):
         notlar.append("UYARI: makro-takvim.json guncel degil -> gercek tarihleri gir")
     if not notlar:
         notlar.append("temiz - engel yok")
 
     return {"updated_at": now.isoformat(timespec="seconds"),
-            "kapi": kapi, "boyut_carpani": carpan,
-            "takvim": tak, "rejim": rej, "sok": sok, "notlar": notlar}
+            "kapi": kapi, "boyut_carpani": carpan, "min_skor": min_skor,
+            "takvim": tak, "rejim": rej, "piyasa_rejimi": piyasa_rejimi,
+            "sok": sok, "notlar": notlar}
 
 
 def write_makro(path=None):

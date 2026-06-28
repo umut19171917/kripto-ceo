@@ -46,6 +46,14 @@ def _makro_kapi():
         return "ACIK"
 
 
+def _makro_min_skor():
+    """Rejim katmaninin onerdigi min skor (makro.json). Yoksa 0 -> filtre yok (eski davranis)."""
+    try:
+        return json.loads(MAKRO_FILE.read_text(encoding="utf-8")).get("min_skor", 0)
+    except Exception:
+        return 0
+
+
 def _acik_tahmin(T, token):
     return any(t["token"] == token and t["durum"] in ("beklemede", "izleniyor") for t in T)
 
@@ -60,6 +68,7 @@ def guncelle(snapshot):
     d = _yukle()
     T = d["tahminler"]
     kapi = _makro_kapi()
+    min_skor = _makro_min_skor()
     now = datetime.now(timezone.utc)
     degisti = False
 
@@ -126,6 +135,8 @@ def guncelle(snapshot):
             if yas is not None and yas < COOLDOWN_SAAT:
                 continue
             sq = v["squeeze"]
+            if max(sq["short_squeeze"], sq["long_squeeze"]) < min_skor:
+                continue   # rejim yuksek-vol/kontajyon -> sadece guclu setup'lara izin ver
             no = max([t.get("no", 0) for t in T], default=0) + 1
             T.append({
                 "no": no, "tarih": now.isoformat(timespec="seconds"),
