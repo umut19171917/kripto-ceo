@@ -11,6 +11,11 @@ from pathlib import Path
 
 KOK = Path(__file__).parent
 
+try:
+    from defter import net_R as _net_R   # komisyon dusulmus net R (varsa)
+except Exception:
+    _net_R = None
+
 
 def _j(name):
     try:
@@ -34,7 +39,8 @@ def _ozet(lst):
     girilmis = kazanc + kayip
     isabet = f"%{len(kazanc) / len(girilmis) * 100:.0f}" if girilmis else "-"
     R = sum((t.get("sonuc_R") or 0) for t in kapali)
-    return acik, kapali, kazanc, kayip, isabet, R
+    netR = sum((_net_R(t) or 0) for t in kapali) if _net_R else None
+    return acik, kapali, kazanc, kayip, isabet, R, netR
 
 
 def main():
@@ -86,12 +92,15 @@ def main():
         T = dft.get("tahminler", [])
         canli = [t for t in T if t.get("kaynak", "canli") != "geri-doldurma"]
         bf = [t for t in T if t.get("kaynak") == "geri-doldurma"]
-        acik, kapali, kazanc, kayip, isabet, R = _ozet(canli)
+        acik, kapali, kazanc, kayip, isabet, R, netR = _ozet(canli)
         print("\nSICIL (gercek/canli):")
         print(f"  acik: {len(acik)}  kapali: {len(kapali)}  kazanc: {len(kazanc)}  kayip: {len(kayip)}")
-        print(f"  ISABET: {isabet}   TOPLAM R: {R:+.2f}")
+        if netR is not None:
+            print(f"  ISABET: {isabet}   TOPLAM R: {R:+.2f} (gross)  |  NET (komisyon dusulmus): {netR:+.2f}")
+        else:
+            print(f"  ISABET: {isabet}   TOPLAM R: {R:+.2f}")
         if bf:
-            _, bk, _, _, bis, bR = _ozet(bf)
+            _, bk, _, _, bis, bR, _ = _ozet(bf)
             print(f"  [geri-doldurma/backtest: {len(bk)} kapali, isabet {bis}, R {bR:+.2f} - ayri tutulur]")
 
         if acik:
@@ -102,7 +111,9 @@ def main():
         if sonk:
             print("\n  SON KAPANANLAR:")
             for t in sonk:
-                print(f"    #{t['no']} {t['token']} {t['yon']} -> {t['durum'].upper()} (R {t.get('sonuc_R')})")
+                nr = _net_R(t) if _net_R else None
+                ns = f" net {nr:+.2f}" if nr is not None else ""
+                print(f"    #{t['no']} {t['token']} {t['yon']} -> {t['durum'].upper()} (gross R {t.get('sonuc_R')}{ns})")
 
         kapanmis = len([t for t in canli if t["durum"] in ("tp1", "tp2", "stop")])
         print("\n" + "=" * 58)

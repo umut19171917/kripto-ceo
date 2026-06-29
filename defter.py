@@ -24,6 +24,28 @@ PENDING_SAAT = 6     # bu surede giris tetiklenmezse -> tetiklenmedi
 ACTIVE_SAAT = 24     # bu surede TP/stop gelmezse -> zaman_asimi
 COOLDOWN_SAAT = 2    # ayni coine bu sure icinde yeni tahmin acma
 
+# Komisyon + slippage modeli (backtest.py ile AYNI): fiyat orani, round-trip.
+# net_R = gross sonuc_R - (giris * ISLEM_MALIYET / risk). Trade mantigina KARISMAZ;
+# sadece sicili DURUST gosterir (gercek getiriye yakin). Backtest: fee dar-stopta baskin.
+ISLEM_MALIYET = 0.0012   # %0.08 komisyon + %0.04 slippage (round-trip tahmini)
+
+
+def maliyet_R(t):
+    """Bir tahminin komisyon+slippage maliyeti, R cinsinden = (giris*MALIYET)/risk."""
+    try:
+        risk = abs(t["giris"] - t["stop"])
+        return (t["giris"] * ISLEM_MALIYET) / risk if risk else 0.0
+    except Exception:
+        return 0.0
+
+
+def net_R(t):
+    """Komisyon dusulmus net R. Girilmemis (sonuc_R yok) -> None."""
+    g = t.get("sonuc_R")
+    if g is None:
+        return None
+    return round(g - maliyet_R(t), 2)
+
 
 def _yukle():
     try:
@@ -165,9 +187,11 @@ def ozet():
     kayip = [t for t in kapali if t["durum"] == "stop"]
     girilmis = kazanc + kayip
     toplam_R = round(sum((t.get("sonuc_R") or 0) for t in kapali), 2)
+    toplam_net_R = round(sum((net_R(t) or 0) for t in kapali), 2)
     isabet = round(len(kazanc) / len(girilmis) * 100, 1) if girilmis else None
     return {"acik": len(acik), "kapali": len(kapali), "kazanc": len(kazanc),
-            "kayip": len(kayip), "isabet_pct": isabet, "toplam_R": toplam_R}
+            "kayip": len(kayip), "isabet_pct": isabet,
+            "toplam_R": toplam_R, "toplam_net_R": toplam_net_R}
 
 
 if __name__ == "__main__":
