@@ -24,17 +24,34 @@ PENDING_SAAT = 6     # bu surede giris tetiklenmezse -> tetiklenmedi
 ACTIVE_SAAT = 24     # bu surede TP/stop gelmezse -> zaman_asimi
 COOLDOWN_SAAT = 2    # ayni coine bu sure icinde yeni tahmin acma
 
-# Komisyon + slippage modeli (backtest.py ile AYNI): fiyat orani, round-trip.
-# net_R = gross sonuc_R - (giris * ISLEM_MALIYET / risk). Trade mantigina KARISMAZ;
-# sadece sicili DURUST gosterir (gercek getiriye yakin). Backtest: fee dar-stopta baskin.
-ISLEM_MALIYET = 0.0012   # %0.08 komisyon + %0.04 slippage (round-trip tahmini)
+# --- Komisyon + slippage modeli (KAYNAKLI) ---
+# KAYNAK: Binance USDⓈ-M Futures fee tarifesi, VIP 0 / regular (2026):
+#   maker %0.0200, taker %0.0500.  https://www.binance.com/en/fee/futureFee
+#   BNB ile fee odenirse ek %10 indirim -> BNB_CARPAN = 0.90 yap.
+# Emir-tipi VARSAYIMI (degistirilebilir): giris=taker (seviyeye gelince agresif market),
+#   TP=maker (onceden konan limit), STOP=taker (stop-market). Slippage SADECE taker bacakta.
+# net_R = gross sonuc_R - (giris * (giris_bacak + cikis_bacak)) / risk.  Trade mantigina KARISMAZ.
+MAKER_FEE = 0.000200     # %0.0200
+TAKER_FEE = 0.000500     # %0.0500
+SLIPPAGE = 0.000200      # taker bacak basina tahmini kayma (~%0.02)
+BNB_CARPAN = 1.0         # BNB ile fee odersen 0.90 (ek %10 indirim)
+GIRIS_TAKER = True       # giris market/agresif mi? Limit(maker) ile giriyorsan False yap
+
+
+def _bacak_maliyet(taker):
+    """Tek bacak (giris veya cikis) maliyeti, fiyat orani. taker=True -> taker+slippage."""
+    return (TAKER_FEE * BNB_CARPAN + SLIPPAGE) if taker else (MAKER_FEE * BNB_CARPAN)
 
 
 def maliyet_R(t):
-    """Bir tahminin komisyon+slippage maliyeti, R cinsinden = (giris*MALIYET)/risk."""
+    """Komisyon+slippage maliyeti, R cinsinden. giris=GIRIS_TAKER, TP->maker, stop->taker."""
     try:
         risk = abs(t["giris"] - t["stop"])
-        return (t["giris"] * ISLEM_MALIYET) / risk if risk else 0.0
+        if risk <= 0:
+            return 0.0
+        giris_b = _bacak_maliyet(GIRIS_TAKER)
+        cikis_b = _bacak_maliyet(t.get("durum") not in ("tp1", "tp2"))
+        return t["giris"] * (giris_b + cikis_b) / risk
     except Exception:
         return 0.0
 

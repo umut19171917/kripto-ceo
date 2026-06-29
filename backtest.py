@@ -34,10 +34,17 @@ CONF_ATR = 0.5          # "kirilim onayi" girisi: seviyeden 0.5*ATR ote
 CONF_PENCERE = 12       # onay icin en fazla 12 mum bekle
 RR = 2.08
 
-# ---- maliyet (gercekci) ----
-FEE_RT = 0.0008         # round-trip taker komisyon (~%0.04 x2)
-SLIP_RT = 0.0004        # round-trip slippage tahmini (~%0.02 x2)
-COST_FRAC = FEE_RT + SLIP_RT   # toplam islem maliyeti (fiyat orani) = %0.12
+# ---- maliyet (KAYNAKLI: Binance USDⓈ-M VIP0, maker %0.02 / taker %0.05) ----
+# https://www.binance.com/en/fee/futureFee  | defter.py ile AYNI model (per-leg).
+# Varsayim: giris=taker, TP=maker, stop=taker; slippage sadece taker bacakta.
+MAKER_FEE = 0.000200
+TAKER_FEE = 0.000500
+SLIPPAGE = 0.000200
+BNB_CARPAN = 1.0        # BNB ile fee -> 0.90
+
+
+def _bacak(taker):
+    return (TAKER_FEE * BNB_CARPAN + SLIPPAGE) if taker else (MAKER_FEE * BNB_CARPAN)
 
 CONFIGS = [
     ("seviye-1.2 (CANLI)", "seviye", 1.2),
@@ -143,7 +150,8 @@ def _isle(K, i, yon, seviye, a, acc):
         else:
             stop, tp = e - risk, e + RR * risk
         sonuc, gross = _resolve(K, i_e, yon, e, stop, tp)
-        cost = (e * COST_FRAC) / risk if risk else 0.0
+        # per-leg: giris taker, cikis TP->maker / stop->taker
+        cost = e * (_bacak(True) + _bacak(sonuc != "tp")) / risk if risk else 0.0
         d = acc[ad][yon]
         d["tetik"] += 1
         d["gross"] += gross
@@ -248,7 +256,7 @@ def main():
         pass
     print("=" * 74)
     print(f"  BACKTEST (Option A) | {INTERVAL} son {GUN}g | R/R {RR} | "
-          f"maliyet %{COST_FRAC * 100:.2f}/islem | " +
+          f"fee maker%{MAKER_FEE*100:.3f}/taker%{TAKER_FEE*100:.3f}+slip | " +
           datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"))
     print(f"  coinler: {', '.join(olcucu.SYMBOLS)}")
     print("=" * 74)
