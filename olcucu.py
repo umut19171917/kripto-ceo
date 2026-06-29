@@ -23,7 +23,7 @@ import requests
 
 # ============================== CONFIG ==============================
 BASE = "https://fapi.binance.com"
-SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "LINKUSDT"]
+SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "LINKUSDT", "LABUSDT"]
 SCALP_TF = "5m"
 SWING_TF = "1h"
 KLINE_LIMIT = 200            # gosterge penceresi
