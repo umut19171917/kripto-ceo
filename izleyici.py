@@ -21,6 +21,7 @@ import time
 import asyncio
 from collections import deque
 from datetime import datetime, timezone
+from pathlib import Path
 
 import websockets
 
@@ -29,6 +30,8 @@ import kalibrasyon  # self-kalibrasyon (esikler.json'u tazeler)
 import makro        # Kanal 2: makro/jeopolitik guvenlik kapisi (makro.json)
 import defter       # tahmin kaydi + sonuc takibi (kripto-defter.json)
 import bosluk       # bosluk kurtarma (PC kapali kaldigi araligi tamamlar)
+import bildirim     # Telegram kanali (C1); token yoksa sessiz no-op
+import likidasyon   # Coinalyze REST likidasyon beslemesi (olu WS'in yerine; ~2-3dk gecikmeli)
 
 # ============================== CONFIG ==============================
 WS_BASE = "wss://fstream.binance.com/stream"
@@ -38,14 +41,26 @@ CASCADE_WINDOW_SEC = 300    # "kademe" penceresi: son 5 dk
 CASCADE_USD = 1_000_000     # son 5dk tek tarafta > bu => KADEME aktif (canli veride kalibre)
 RECAL_SEC = 12 * 3600       # esikleri her 12 saatte bir yeniden kalibre et (self-kalibrasyon)
 MAKRO_SEC = 120             # Kanal 2 (makro/jeopolitik) kapiyi 2 dakikada bir tazele
+OZET_SAAT_UTC = 18          # gunluk Telegram ozeti (18 UTC = 21:00 TR)
+OZET_DURUM_FILE = Path(__file__).parent / "ozet-durum.json"   # son gonderim gunu (restart mukerrer ozet yollamasin)
 
 # her sembol icin likidasyon olaylari: deque[(ts, side, usd, price)]
 liq_events = {s: deque() for s in olcucu.SYMBOLS}
 
+# WS'ten gelen HAM mesaj sayisi. 2026-07-01 teshisi: bu ortamda WS akislari veri
+# vermiyor (baglanti kurulur ama mesaj gelmez) -> live_liq sifirlari "olay yok"
+# degil "veri yok" demek olabilir. Sayac 0 ise signals.json'a durust bayrak yazilir.
+ws_mesaj_sayisi = 0
+
+# Coinalyze beslemesi durumu (likidasyon_loop gunceller)
+coinalyze_son_ok = 0.0        # son basarili cekim (epoch); 5dk'dan eskiyse veri-yok say
+cascade_esik = {}             # per-symbol cascade esigi USD (likidasyon.kalibre; yoksa CASCADE_USD)
+
 
 # ============================== Likidasyon toplama ==============================
-def add_liq(sym, side, usd, price):
-    liq_events[sym].append((time.time(), side, usd, price))
+def add_liq(sym, side, usd, price, ts=None):
+    """ts: olayin gercek zamani (Coinalyze bar'lari gecmis damgali gelir); yoksa simdi."""
+    liq_events[sym].append((ts or time.time(), side, usd, price))
 
 
 def liq_summary(sym, now):
@@ -64,10 +79,11 @@ def liq_summary(sym, now):
             long1h += usd
         else:
             short1h += usd
+    esik = cascade_esik.get(sym, CASCADE_USD)   # per-symbol kalibre (Coinalyze P99.5); yoksa eski sabit
     cascade = None
-    if long5 >= CASCADE_USD and long5 >= short5:
+    if long5 >= esik and long5 >= short5:
         cascade = "long"    # longlar likide oluyor -> ASAGI kademe
-    elif short5 >= CASCADE_USD:
+    elif short5 >= esik:
         cascade = "short"   # shortlar likide oluyor -> YUKARI kademe
     return {
         "long_liq_5m_usd": round(long5),
@@ -80,6 +96,7 @@ def liq_summary(sym, now):
 
 # ============================== WebSocket tuketici ==============================
 async def ws_consumer():
+    global ws_mesaj_sayisi
     streams = "/".join(f"{s.lower()}@forceOrder" for s in olcucu.SYMBOLS)
     url = f"{WS_BASE}?streams={streams}"
     while True:
@@ -87,6 +104,7 @@ async def ws_consumer():
             async with websockets.connect(url, ping_interval=None) as ws:
                 olcucu.log_line(f"[WS] baglandi -> {streams}")
                 async for raw in ws:
+                    ws_mesaj_sayisi += 1
                     msg = json.loads(raw)
                     o = msg.get("data", {}).get("o")
                     if not o:
@@ -112,12 +130,25 @@ async def snapshot_loop():
         t0 = time.time()
         now = time.time()
         out = {"updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-               "source": "binance-futures-rest+ws", "symbols": {}}
-        for sym in olcucu.SYMBOLS:
+               "source": "binance-rest + coinalyze-likidasyon(1dk,~2-3dk gecikme)", "symbols": {}}
+        # 11 coin siralı islenirse 30sn'lik turu asar -> REST+matematik PARALEL
+        # (thread executor; her sembolun hatasi kendi hucresinde kalir).
+        async def _analiz(sym):
             try:
-                # REST + matematik bloklayici -> ayri thread'de calistir
-                d = await loop.run_in_executor(None, olcucu.analyze_symbol, sym)
+                return sym, await loop.run_in_executor(None, olcucu.analyze_symbol, sym)
+            except Exception as e:
+                return sym, {"error": f"{type(e).__name__}: {e}"}
+
+        for sym, d in await asyncio.gather(*[_analiz(s) for s in olcucu.SYMBOLS]):
+            if "error" not in d:
                 d["live_liq"] = liq_summary(sym, now)
+                # Durustluk bayragi: WS canli mi > Coinalyze mi (1dk bar, ~2-3dk gecikme) > veri yok.
+                if ws_mesaj_sayisi > 0:
+                    d["live_liq"]["veri"] = "canli-ws"
+                elif time.time() - coinalyze_son_ok < 300:
+                    d["live_liq"]["veri"] = "coinalyze-1dk"
+                else:
+                    d["live_liq"]["veri"] = "pasif/veri-yok"
                 cas = d["live_liq"]["cascade"]
                 sq = d["squeeze"]
                 if cas == "short" and sq["short_squeeze"] >= 50:
@@ -126,14 +157,13 @@ async def snapshot_loop():
                 elif cas == "long" and sq["long_squeeze"] >= 50:
                     sq["note"] = (f"LONG SQUEEZE TETIKLENDI (canli: long likidasyon "
                                   f"${d['live_liq']['long_liq_5m_usd']:,}/5dk) -> asagi")
-                out["symbols"][sym] = d
-            except Exception as e:
-                out["symbols"][sym] = {"error": f"{type(e).__name__}: {e}"}
+            out["symbols"][sym] = d
 
-        olcucu.OUT_FILE.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+        olcucu.atomik_yaz(olcucu.OUT_FILE, out)
 
         try:
-            defter.guncelle(out)
+            # guncelle artik 1dk mum ceker (fitil-tabanli takip) -> bloklamasin
+            await loop.run_in_executor(None, defter.guncelle, out)
         except Exception as e:
             olcucu.log_line(f"[DEFTER] hata: {type(e).__name__}: {e}")
 
@@ -144,8 +174,11 @@ async def snapshot_loop():
                 continue
             ll, sq = d["live_liq"], d["squeeze"]
             kademe = f" | KADEME: {ll['cascade'].upper()}" if ll["cascade"] else ""
-            olcucu.log_line(f"[{stamp}] {sym} ${d['price']} | SS {sq['short_squeeze']} LS {sq['long_squeeze']} "
-                            f"| 5dk likid L${ll['long_liq_5m_usd']:,} S${ll['short_liq_5m_usd']:,}{kademe}")
+            if ll.get("veri") == "pasif/veri-yok":
+                likid = "| likid VERI-YOK (WS pasif)"
+            else:
+                likid = f"| 5dk likid L${ll['long_liq_5m_usd']:,} S${ll['short_liq_5m_usd']:,}{kademe}"
+            olcucu.log_line(f"[{stamp}] {sym} ${d['price']} | SS {sq['short_squeeze']} LS {sq['long_squeeze']} {likid}")
             if sq["note"] != "yok":
                 olcucu.log_line(f"    >>> ALARM: {sq['note']}")
 
@@ -166,16 +199,110 @@ async def recalib_loop():
 
 
 async def makro_loop():
-    """Kanal 2: makro.json'u periyodik tazeler (DXY rejim + takvim + sok ayak izi)."""
+    """Kanal 2: makro.json'u periyodik tazeler (DXY rejim + takvim + sok ayak izi).
+    Telegram'a sadece kapi DEGISIMI bildirilir (2dk'da bir durum spami degil)."""
     loop = asyncio.get_event_loop()
+    onceki_kapi = None
     while True:
         try:
             m = await loop.run_in_executor(None, makro.write_makro)
             if m["kapi"] != "ACIK":
                 olcucu.log_line(f"[MAKRO] KAPI {m['kapi']} (boyut {m['boyut_carpani']}): " + " ; ".join(m["notlar"]))
+            if onceki_kapi is not None and m["kapi"] != onceki_kapi:
+                bildirim.gonder(f"[MAKRO] kapi degisti: {onceki_kapi} -> {m['kapi']} "
+                                f"(boyut x{m['boyut_carpani']})\n" + " ; ".join(m["notlar"][:2]))
+            onceki_kapi = m["kapi"]
         except Exception as e:
             olcucu.log_line(f"[MAKRO] hata: {type(e).__name__}: {e}")
         await asyncio.sleep(MAKRO_SEC)
+
+
+async def likidasyon_loop():
+    """Coinalyze'dan 60 sn'de bir KAPANMIS 1dk likidasyon barlarini cek (TEK istek,
+    tum semboller) -> liq_events'e bar zaman damgasiyla isle. Ilk turda 60dk geriye
+    bakar (1s penceresi hemen isinir). Gunde 1 cascade esigi kalibrasyonu.
+    Config yoksa donguden cikar; her hata cekirdegi ETKILEMEZ (throttled log)."""
+    global coinalyze_son_ok, cascade_esik
+    if not likidasyon.aktif():
+        olcucu.log_line("[LIKIDASYON] coinalyze.json yok - besleme PASIF (WS de olu -> likid veri-yok)")
+        return
+    loop = asyncio.get_event_loop()
+    cursor = {}          # sym -> islenen son bar ts (cift sayim olmasin)
+    son_hata_log = 0.0
+    ilk = True
+    son_kalibrasyon = 0.0
+    while True:
+        try:
+            if time.time() - son_kalibrasyon > 3600:   # dosya-mtime throttle asil fren (24s)
+                son_kalibrasyon = time.time()
+                e = await loop.run_in_executor(None, likidasyon.kalibre, olcucu.SYMBOLS)
+                if e:
+                    cascade_esik = e
+                    olcucu.log_line(f"[LIKIDASYON] cascade esikleri ({len(e)} sembol, P{likidasyon.KAL_PCT}): "
+                                    + ", ".join(f"{s} ${v/1e3:,.0f}k" for s, v in list(e.items())[:4]) + " ...")
+            bars = await loop.run_in_executor(None, likidasyon.taze_bars,
+                                              olcucu.SYMBOLS, 60 if ilk else 10)
+            ilk = False
+            n_yeni = 0
+            for sym, satirlar in bars.items():
+                for t, l_usd, s_usd in satirlar:
+                    if t <= cursor.get(sym, 0):
+                        continue
+                    cursor[sym] = t
+                    if l_usd > 0:
+                        add_liq(sym, "SELL", l_usd, 0, ts=t)   # long likide -> asagi baski
+                    if s_usd > 0:
+                        add_liq(sym, "BUY", s_usd, 0, ts=t)    # short likide -> yukari baski
+                    n_yeni += 1
+            if bars:
+                coinalyze_son_ok = time.time()
+        except Exception as ex:
+            if time.time() - son_hata_log > 3600:
+                son_hata_log = time.time()
+                olcucu.log_line(f"[LIKIDASYON] cekim hatasi: {type(ex).__name__}: {str(ex)[:70]}")
+        await asyncio.sleep(60)
+
+
+async def ozet_loop():
+    """Gunde bir Telegram ozeti (OZET_SAAT_UTC sonrasi ilk kontrol). Token yoksa no-op.
+    Son gonderim gunu DOSYADA tutulur (2026-07-06 duzeltmesi): izleyici 18 UTC
+    sonrasi yeniden baslarsa ayni gunun ozeti MUKERRER gitmez. Gonderim basarisizsa
+    'gonderildi' sayilmaz -> 5 dk sonra yeniden denenir."""
+    try:
+        son_gun = json.loads(OZET_DURUM_FILE.read_text(encoding="utf-8")).get("son_ozet_gun")
+    except Exception:
+        son_gun = None
+    while True:
+        try:
+            now = datetime.now(timezone.utc)
+            gun = now.date().isoformat()
+            if now.hour >= OZET_SAAT_UTC and son_gun != gun and bildirim.aktif():
+                o = defter.ozet()
+                T = defter._yukle()["tahminler"]
+                rl = defter.acik_risk_pct(T, "LONG")
+                rs = defter.acik_risk_pct(T, "SHORT")
+                isb = f"%{o['isabet_pct']}" if o["isabet_pct"] is not None else "-"
+                radar_s = ""
+                try:
+                    import radar as _radar   # ayri surec ama radar_ozeti sadece json okur
+                    r = _radar.radar_ozeti(24)
+                    if r:
+                        en = f" (en buyuk: {r['hareket'][0][0]} %{r['hareket'][0][1]:.0f})" if r["hareket"] else ""
+                        radar_s = (f"\nradar 24s: {len(r['hareket'])} hareket alarmi{en} | "
+                                   f"{len(r['kurulum'])} kurulum adayi - detay: radar.log")
+                except Exception:
+                    pass
+                ok = bildirim.gonder(f"[GUNLUK OZET {gun}]\n"
+                                     f"acik {o['acik']} | kapali {o['kapali']} | isabet {isb}\n"
+                                     f"gross {o['toplam_R']:+.2f}R | net {o['toplam_net_R']:+.2f}R\n"
+                                     f"acik risk: LONG %{rl:.1f} / SHORT %{rs:.1f} (tavan %{defter.RISK_TAVANI_PCT:g})"
+                                     + radar_s)
+                if ok:
+                    son_gun = gun
+                    olcucu.atomik_yaz(OZET_DURUM_FILE, {"son_ozet_gun": gun})
+        except Exception as e:
+            olcucu.log_line(f"[OZET] hata: {type(e).__name__}: {e}")
+        await asyncio.sleep(300)
 
 
 # ============================== main ==============================
@@ -202,10 +329,15 @@ async def amain():
     except Exception as e:
         olcucu.log_line(f"[BOSLUK] hata: {type(e).__name__}: {e}")
 
+    if bildirim.aktif():
+        bildirim.gonder("[SISTEM] izleyici basladi (" + ", ".join(olcucu.SYMBOLS) + ")")
+
     tasks = [asyncio.create_task(ws_consumer()),
              asyncio.create_task(snapshot_loop()),
              asyncio.create_task(recalib_loop()),
-             asyncio.create_task(makro_loop())]
+             asyncio.create_task(makro_loop()),
+             asyncio.create_task(ozet_loop()),
+             asyncio.create_task(likidasyon_loop())]
     if runtime:
         await asyncio.sleep(runtime)
         for t in tasks:

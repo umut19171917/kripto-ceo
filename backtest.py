@@ -24,12 +24,12 @@ from datetime import datetime, timezone
 
 import olcucu  # _get, atr, get_thresholds, SYMBOLS
 
-# ---- parametreler (canli mekanigi taklit eder) ----
-INTERVAL = "5m"
-GUN = 30
+# ---- parametreler (canli mekanigi taklit eder; SWING-1H konfig 2026-07-02) ----
+INTERVAL = "1h"
+GUN = 90
 LOOKBACK = 50
-MAXBAR = 288            # 24s ileri tarama
-COOLDOWN_BAR = 24       # 2s
+MAXBAR = 120            # 120 bar = 5 gun ileri tarama (canli ACTIVE_SAAT ile uyumlu)
+COOLDOWN_BAR = 12       # 12s (canli COOLDOWN_SAAT)
 CONF_ATR = 0.5          # "kirilim onayi" girisi: seviyeden 0.5*ATR ote
 CONF_PENCERE = 12       # onay icin en fazla 12 mum bekle
 RR = 2.08
@@ -40,16 +40,16 @@ RR = 2.08
 MAKER_FEE = 0.000200
 TAKER_FEE = 0.000500
 SLIPPAGE = 0.000200
-BNB_CARPAN = 1.0        # BNB ile fee -> 0.90
+BNB_CARPAN = 0.90       # 2026-07-06: kullanici Futures'ta BNB ile fee odemeyi aktifletti (defter.py ile ayni)
 
 
 def _bacak(taker):
     return (TAKER_FEE * BNB_CARPAN + SLIPPAGE) if taker else (MAKER_FEE * BNB_CARPAN)
 
 CONFIGS = [
-    ("seviye-1.2 (CANLI)", "seviye", 1.2),
+    ("seviye-1.2",         "seviye", 1.2),
     ("seviye-1.8",         "seviye", 1.8),
-    ("seviye-2.5",         "seviye", 2.5),
+    ("seviye-2.5 (CANLI)", "seviye", 2.5),
     ("kirilim-1.2",        "kirilim", 1.2),
     ("kirilim-1.8",        "kirilim", 1.8),
     ("kirilim-2.5",        "kirilim", 2.5),
@@ -77,11 +77,29 @@ def klines_history(symbol, interval, gun):
 
 
 def funding_serisi(symbol):
-    """Funding gecmisi -> (zamanlar[], oranlar[]) sirali; yoksa bos."""
+    """Funding gecmisi TAM KAPSAMA -> (zamanlar[], oranlar[]) sirali; yoksa bos.
+    DUZELTME (2026-07-02): uc nokta limit=1000 istense de tek istekte ~200 kayit
+    donduruyor -> startTime ile sayfalanmazsa pencerenin basi funding'siz kalir
+    ve filtre adaylari SESSIZCE eler (ilk kosuda 180g == 90g cikma sebebi)."""
     try:
-        raw = olcucu._get("/fapi/v1/fundingRate", {"symbol": symbol, "limit": 1000})
-        raw.sort(key=lambda x: x["fundingTime"])
-        return [r["fundingTime"] for r in raw], [float(r["fundingRate"]) for r in raw]
+        start = int(datetime.now(timezone.utc).timestamp() * 1000) - (GUN + 3) * 86_400_000
+        ts, fr, cur = [], [], start
+        while True:
+            raw = olcucu._get("/fapi/v1/fundingRate",
+                              {"symbol": symbol, "startTime": cur, "limit": 1000})
+            if not raw:
+                break
+            raw.sort(key=lambda x: x["fundingTime"])
+            for r in raw:
+                t = int(r["fundingTime"])
+                if not ts or t > ts[-1]:
+                    ts.append(t)
+                    fr.append(float(r["fundingRate"]))
+            nxt = int(raw[-1]["fundingTime"]) + 1
+            if nxt <= cur or len(raw) < 2 or len(ts) > 20000:
+                break
+            cur = nxt
+        return ts, fr
     except Exception:
         return [], []
 
@@ -245,7 +263,7 @@ def calistir(filtre, baslik):
             satir.append(f"{s}: HATA {type(e).__name__}: {str(e)[:60]}")
     print("  " + " | ".join(satir))
     _tablo(toplam, baslik)
-    _yon_kirilim(toplam, "seviye-1.2 (CANLI)")
+    _yon_kirilim(toplam, "seviye-2.5 (CANLI)")
     return toplam
 
 
@@ -271,7 +289,7 @@ def main():
     print("OKUMA: 'ortNetR' = islem basi net R (komisyon dahil). En yuksek = en iyi.")
     print("  - Filtresiz: cok ornek, mutlak deger yanli ama config SIRASI gecerli.")
     print("  - Funding-filtreli: canli setup'a yakin alt-kume (yaklasik).")
-    print("  - LABUSDT kalibresiz -> funding-filtreli sonucu yanli olabilir.")
+    print("  - Yeni/az-gecmisli coinlerde funding-filtresi yaniltici olabilir (kalibrasyon penceresi kisa).")
 
 
 if __name__ == "__main__":

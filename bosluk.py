@@ -14,14 +14,15 @@ A bolumu sicili korur; B bolumu ogrenme/backtest verisi ekler (etiketli).
 """
 
 import json
+import time
 from datetime import datetime, timezone, timedelta
 
 import olcucu
 import defter
 
-MAX_BOSLUK_SAAT = 24    # en fazla son 24s geri doldur
+MAX_BOSLUK_SAAT = 24    # en fazla son 24s geri doldur (B bolumu)
 ADIM_DK = 30            # B: tarama adimi
-BACKFILL_COOLDOWN_SAAT = 2
+BACKFILL_COOLDOWN_SAAT = defter.COOLDOWN_SAAT   # canli cooldown ile ayni (swing-1h: 12s)
 
 
 def _now():
@@ -58,65 +59,7 @@ def _nearest_le(pairs, t_ms):
     return val
 
 
-# ---- cekirdek: bir tahmini mumlarla ilerlet/sonuclandir ----
-def coz(t, k1m):
-    """t tahminini 1dk mumlariyla (kronolojik) ilerlet. t yerinde guncellenir. Doner: degisti_mi."""
-    yon, giris, stop, tp1, tp2 = t["yon"], t["giris"], t["stop"], t["tp1"], t["tp2"]
-    tarih = datetime.fromisoformat(t["tarih"])
-    tetik = datetime.fromisoformat(t["tetik_tarih"]) if t.get("tetik_tarih") else None
-    risk = abs(giris - stop)
-    degisti = False
-
-    for k in k1m:
-        kt = datetime.fromtimestamp(k["t"] / 1000, timezone.utc)
-        if kt < tarih:
-            continue
-
-        if t["durum"] == "beklemede":
-            if tetik is None and (kt - tarih).total_seconds() / 3600 >= defter.PENDING_SAAT:
-                t["durum"] = "tetiklenmedi"
-                t["kapanis_tarih"] = kt.isoformat(timespec="seconds")
-                return True
-            triggered = (k["l"] <= giris) if yon == "SHORT" else (k["h"] >= giris)
-            if triggered:
-                t["durum"] = "izleniyor"
-                t["tetik_tarih"] = kt.isoformat(timespec="seconds")
-                tetik = kt
-                degisti = True
-            else:
-                continue
-
-        if t["durum"] == "izleniyor":
-            if tetik and (kt - tetik).total_seconds() / 3600 >= defter.ACTIVE_SAAT:
-                t["durum"] = "zaman_asimi"
-                t["sonuc_fiyat"] = round(k["c"], 4)
-                t["sonuc_R"] = 0.0
-                t["kapanis_tarih"] = kt.isoformat(timespec="seconds")
-                return True
-            if yon == "SHORT":
-                stop_hit, tp_hit = k["h"] >= stop, k["l"] <= tp1
-            else:
-                stop_hit, tp_hit = k["l"] <= stop, k["h"] >= tp1
-            if stop_hit and tp_hit:
-                sonuc = "stop"          # ayni mumda ikisi -> temkinli: stop
-            elif tp_hit:
-                if yon == "SHORT":
-                    sonuc = "tp2" if k["l"] <= tp2 else "tp1"
-                else:
-                    sonuc = "tp2" if k["h"] >= tp2 else "tp1"
-            elif stop_hit:
-                sonuc = "stop"
-            else:
-                continue
-            fiyat = stop if sonuc == "stop" else (tp2 if sonuc == "tp2" else tp1)
-            R = ((giris - fiyat) if yon == "SHORT" else (fiyat - giris)) / risk if risk else None
-            t["durum"] = sonuc
-            t["sonuc_fiyat"] = round(fiyat, 4)
-            t["sonuc_R"] = round(R, 2) if R is not None else None
-            t["kapanis_tarih"] = kt.isoformat(timespec="seconds")
-            return True
-    return degisti
-
+# ---- cekirdek coz() motoru artik defter.py'de (canli+bosluk TEK muhasebe) ----
 
 # ---- A: acik tahminleri coz ----
 def _bolum_a(d, k1m_cache):
@@ -127,20 +70,21 @@ def _bolum_a(d, k1m_cache):
         k1m = k1m_cache.get(t["token"])
         if not k1m:
             continue
-        if coz(t, k1m):
+        if defter.coz(t, k1m):
             n += 1
     return n
 
 
 # ---- B: kacirilan setuplari yeniden kur ----
-def _bolum_b(d, t0, t1, k5m_cache, k1m_cache):
+def _bolum_b(d, t0, t1, kplan_cache, k1m_cache):
+    """kplan_cache = 1h mumlar (swing-1h plan dilimi): seviye+ATR bunlardan."""
     T = d["tahminler"]
     eklenen = 0
     son_backfill = {}
     adim = timedelta(minutes=ADIM_DK)
     for sym in olcucu.SYMBOLS:
-        k5m = k5m_cache.get(sym)
-        if not k5m or len(k5m) < 64:
+        kplan = kplan_cache.get(sym)
+        if not kplan or len(kplan) < 64:
             continue
         try:
             oi_pairs = [(x["t"], x["oi"]) for x in olcucu.get_oi_hist(sym, "5m", 288)]
@@ -152,7 +96,7 @@ def _bolum_b(d, t0, t1, k5m_cache, k1m_cache):
         T_cur = t0
         while T_cur <= t1:
             tms = int(T_cur.timestamp() * 1000)
-            upto = [k for k in k5m if k["t"] <= tms]
+            upto = [k for k in kplan if k["t"] <= tms]
             if len(upto) >= 64:
                 price = upto[-1]["c"]
                 a = olcucu.atr(upto)
@@ -177,11 +121,11 @@ def _bolum_b(d, t0, t1, k5m_cache, k1m_cache):
                                 "skor": max(ss, lsq), "giris": plan["giris"], "stop": plan["stop"],
                                 "tp1": plan["tp1"], "tp2": plan["tp2"], "rr1": plan["rr1"],
                                 "log_fiyat": price, "makro_kapi": "backfill-atlandi",
-                                "kaynak": "geri-doldurma",
+                                "kaynak": "geri-doldurma", "konfig": defter.KONFIG,
                                 "durum": "beklemede", "tetik_tarih": None,
                                 "sonuc_fiyat": None, "sonuc_R": None, "kapanis_tarih": None,
                             }
-                            coz(pred, k1m_cache.get(sym, []))
+                            defter.coz(pred, k1m_cache.get(sym, []))
                             T.append(pred)
                             son_backfill[sym] = T_cur
                             eklenen += 1
@@ -203,17 +147,24 @@ def tamamla(backfill=True):
     gerekli_dk = int(min(bosluk, MAX_BOSLUK_SAAT) * 60) + 90
     d = defter._yukle()
 
-    # 1dk + 5dk mum onbellegi (bir kez cek)
-    k1m_cache, k5m_cache = {}, {}
+    # cozum + plan mum onbellegi (bir kez cek)
+    k1m_cache, kplan_cache = {}, {}
     for sym in olcucu.SYMBOLS:
         try:
-            k1m_cache[sym] = olcucu.get_klines(sym, "1m", min(1440, gerekli_dk))
-            k5m_cache[sym] = olcucu.get_klines(sym, "5m", 300)
+            if gerekli_dk <= 1400:
+                k1m_cache[sym] = defter.k1m_kapanmis(sym, gerekli_dk)
+            else:
+                # uzun bosluk (>~23s): 1m tek istege sigmaz -> KAPANMIS 5m mumlarla coz
+                # (swing-1h stoplar genis, 5dk granul yeterli; ayni temkinli kurallar)
+                raw = olcucu.get_klines(sym, "5m", min(1500, gerekli_dk // 5 + 3))
+                simdi_ms = time.time() * 1000
+                k1m_cache[sym] = [x for x in raw if x["t"] + 300_000 <= simdi_ms]
+            kplan_cache[sym] = olcucu.get_klines(sym, "1h", 200)   # plan dilimi (swing-1h)
         except Exception:
             pass
 
     cozulen = _bolum_a(d, k1m_cache)
-    eklenen = _bolum_b(d, t0, now, k5m_cache, k1m_cache) if backfill else 0
+    eklenen = _bolum_b(d, t0, now, kplan_cache, k1m_cache) if backfill else 0
 
     defter._kaydet(d)
     return {"durum": "tamamlandi", "bosluk_saat": round(bosluk, 2),

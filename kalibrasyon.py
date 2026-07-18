@@ -38,11 +38,48 @@ def pct_str(x):
 
 
 def funding_rates(symbol, limit=500):
-    raw = olcucu._get("/fapi/v1/fundingRate", {"symbol": symbol, "limit": limit})
-    rates = [float(x["fundingRate"]) for x in raw]
-    t0 = datetime.fromtimestamp(raw[0]["fundingTime"] / 1000, timezone.utc).date()
-    t1 = datetime.fromtimestamp(raw[-1]["fundingTime"] / 1000, timezone.utc).date()
-    return rates, t0, t1
+    """Son `limit` funding kaydi — startTime SAYFALAMALI.
+    DUZELTME (2026-07-04): uc nokta limit=1000 istense de tek istekte ~200 kayit
+    donduruyor (backtest.funding_serisi'nde 2026-07-02'de tespit edildi) ->
+    sayfalanmazsa gercek pencere ~66 gun kalir (hedef 500 kayit ~166 gun @8s).
+    Kadans adaptif: ilk bloktan medyan settlement araligi olculur; SAATLIK
+    funding'li coinlerde (LAB tipi) pencere ona gore daralir, istek patlamaz."""
+    probe = sorted(olcucu._get("/fapi/v1/fundingRate", {"symbol": symbol, "limit": 1000}),
+                   key=lambda x: int(x["fundingTime"]))
+    if not probe:
+        return [], None, None
+    ts = [int(x["fundingTime"]) for x in probe]
+    fr = [float(x["fundingRate"]) for x in probe]
+    if len(ts) < limit:
+        gaps = sorted(ts[i] - ts[i - 1] for i in range(1, len(ts)))
+        gap = gaps[len(gaps) // 2] if gaps else 8 * 3600 * 1000
+        cur = ts[-1] - int(limit * gap * 1.2)   # hedef pencerenin basi (tahmini)
+        eski_ts, eski_fr = [], []
+        for _ in range(40):                      # guvenlik tavani
+            raw = sorted(olcucu._get("/fapi/v1/fundingRate",
+                                     {"symbol": symbol, "startTime": cur, "limit": 1000}),
+                         key=lambda x: int(x["fundingTime"]))
+            yeni = False
+            for r in raw:
+                t = int(r["fundingTime"])
+                if t >= ts[0]:
+                    break                        # probe blogunun basina ulastik
+                if not eski_ts or t > eski_ts[-1]:
+                    eski_ts.append(t)
+                    eski_fr.append(float(r["fundingRate"]))
+                    yeni = True
+            if not yeni or not raw:
+                break
+            son_t = int(raw[-1]["fundingTime"])
+            if son_t >= ts[0]:
+                break
+            cur = son_t + 1
+        ts = eski_ts + ts
+        fr = eski_fr + fr
+    ts, fr = ts[-limit:], fr[-limit:]
+    t0 = datetime.fromtimestamp(ts[0] / 1000, timezone.utc).date()
+    t1 = datetime.fromtimestamp(ts[-1] / 1000, timezone.utc).date()
+    return fr, t0, t1
 
 
 def oi_1h_deltas(symbol, limit=500):
@@ -78,7 +115,7 @@ def write_config(path=None):
             out["symbols"][sym] = compute_thresholds(sym)
         except Exception as e:
             out["symbols"][sym] = {"error": f"{type(e).__name__}: {e}"}
-    path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    olcucu.atomik_yaz(path, out)
     return out
 
 

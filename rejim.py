@@ -79,11 +79,16 @@ def vol_rejimi():
         return {"vol_orani": None, "yuksek": False, "btc_30g_vol_pct": None, "hata": str(e)[:50]}
 
 
+# Korelasyon SABIT 4 majorden olculur (T5 dersi: KOR_SPIKE=0.85 esigi bu 4'luye
+# gore ayarlandi; SYMBOLS genisledikce metrik kaymasin diye SYMBOLS'ten AYRILDI).
+KOR_SYMS = ("BTCUSDT", "ETHUSDT", "SOLUSDT", "LINKUSDT")
+
+
 def korelasyon():
     """BTC-ETH-SOL-LINK saatlik getiri ortalama ikili korelasyonu."""
     try:
         rets = {}
-        for s in olcucu.SYMBOLS:
+        for s in KOR_SYMS:
             cl = [k["c"] for k in olcucu.get_klines(s, "1h", 168)]   # ~7 gun
             rets[s] = _returns(cl)
         syms = list(rets.keys())
@@ -151,7 +156,7 @@ def write_rejim(path=None):
     path = Path(path) if path else REJIM_FILE
     out = hesapla()
     try:
-        path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+        olcucu.atomik_yaz(path, out)
     except Exception:
         pass
     return out

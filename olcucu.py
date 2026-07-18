@@ -13,8 +13,10 @@ Calistirma:
     venv\\Scripts\\python.exe olcucu.py --loop 30   # her 30 sn'de bir guncelle
 """
 
+import os
 import sys
 import json
+import math
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,9 +25,17 @@ import requests
 
 # ============================== CONFIG ==============================
 BASE = "https://fapi.binance.com"
-SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "LINKUSDT", "LABUSDT"]
+# C2 genislemesi (2026-07-05, kullanici onayi): 4 -> 11 coin.
+# Secim verisi: hacim + funding gecmisi >=166g + 8s funding ritmi + korelasyon
+# cesitliligi (ZEC 0.50 / NEAR 0.57). LABUSDT = kullanici istegiyle TAM UYE; ama
+# funding'i SAATLIK oldugundan kalibrasyonu yapisal zayif (pencere ~1 ay) ->
+# tahminleri "deneysel" etiketlenir, ANA sicil istatistigine (K2) KARISMAZ.
+SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "LINKUSDT",
+           "XRPUSDT", "BNBUSDT", "DOGEUSDT", "ZECUSDT", "ADAUSDT", "NEARUSDT",
+           "LABUSDT"]
+DENEYSEL = {"LABUSDT"}   # kayitlari tutulur+cozulur ama ana sicilden ayri raporlanir
 SCALP_TF = "5m"
-SWING_TF = "1h"
+SWING_TF = "1h"                  # PLAN bu dilimden uretilir (swing-1h konfig, 2026-07-02)
 KLINE_LIMIT = 200            # gosterge penceresi
 SWING_LOOKBACK = 50          # likidasyon miknatis seviyeleri icin
 HTTP_TIMEOUT = 15
@@ -43,10 +53,15 @@ DEFAULT_TH = {
 SQUEEZE_FLAG = 70                # >=70 -> sikisma kurulumu flag
 
 # --- Faz 2 uretici: ATR-tabanli deterministik giris/stop/TP ---
+# SWING-1H (2026-07-02): plan 1h ATR + 1h seviyeden. Gerekce (backtest 90g+180g,
+# 4 major): net R 5m'de her configde negatif, 1h'de filtreli 6/6 pozitif; genis
+# stop (2.5 ATR) tutarli en iyi bolge. Oranlar korundu: rr1=2.08, rr2=3.33.
 PLAN_FLAG = SQUEEZE_FLAG          # plan ancak alarm seviyesinde (>=70) uretilir (tutarlilik)
-STOP_ATR = 1.2                   # stop = giris -+ ATR*1.2
-TP1_ATR = 2.5                    # TP1  = giris +- ATR*2.5  (R/R ~2.08)
-TP2_ATR = 4.0                    # TP2  = giris +- ATR*4.0
+STOP_ATR = 2.5                   # stop = giris -+ ATR(1h)*2.5
+TP1_ATR = 5.2                    # TP1  = giris +- ATR*5.2   (rr1 = 5.2/2.5 = 2.08)
+STOP_PCT_TABAN = 0.1             # stop mesafesi fiyatin %0.1'inden dar -> dejenere (stablecoin/olu oynaklik);
+                                 # gidis-donus fee (~%0.08-0.13) tek basina stop mesafesini asar, icra edilemez
+TP2_ATR = 8.33                   # TP2  = giris +- ATR*8.33  (rr2 = 3.33)
 RISK_PCT = 1.0                   # islem basina portfoyun %1'i risk
 
 
@@ -103,10 +118,10 @@ def get_ls_ratio(symbol, period="5m"):
     return float(raw[-1]["longShortRatio"])
 
 
-def get_top_ls_ratio(symbol, period="5m"):
-    raw = _get("/futures/data/topLongShortPositionRatio",
-               {"symbol": symbol, "period": period, "limit": 1})
-    return float(raw[-1]["longShortRatio"])
+# top_ls (topLongShortPositionRatio) KALDIRILDI (2026-07-04, B1 karari):
+# canli sicilde katkisiz (monotonluk rho -0.12, n=30) + tarihsel test IMKANSIZ
+# (uc nokta ~30 gun tutar; 60g istegi HTTP 400, probe ile dogrulandi) ->
+# "ya kullan ya toplama" kurali geregi cekim birakildi (~11.5k bos istek/gun idi).
 
 
 # ============================== Matematik (deterministik) ==============================
@@ -225,14 +240,19 @@ def squeeze_scores(price, funding, oi_delta_pct, ls_ratio, swing_high, swing_low
 
 # ============================== Faz 2 uretici (islem plani) ==============================
 def _p(price):
-    """Fiyat buyuklugune gore ondalik hassasiyet."""
+    """Fiyat buyuklugune gore ondalik hassasiyet (~4 anlamli hane).
+    2026-07-16 AKE dersi: 0.001$ coinde sabit 4 hane = %10'luk fiyat adimlari ->
+    0.1 altinda hane sayisi buyuklukle olceklenir (onde gelen sifir basina +1),
+    tavan 8 (Binance max hassasiyet)."""
     if price >= 1000:
         return 1
     if price >= 10:
         return 2
     if price >= 1:
         return 3
-    return 4
+    if price >= 0.1:
+        return 4
+    return min(8, 3 - math.floor(math.log10(price)))
 
 
 def trade_plan(price, atr_val, swing_high, swing_low, ss, lsq):
@@ -259,6 +279,20 @@ def trade_plan(price, atr_val, swing_high, swing_low, ss, lsq):
     stop_pct = round(risk / giris * 100, 2) if giris else None
     poz_pct = round(RISK_PCT / stop_pct * 100, 1) if stop_pct else None
     gecerli = rr1 is not None and rr1 >= 2.0
+    neden = "R/R yeterli (>=2)" if gecerli else "R/R<2 -> VETO (girme)"
+    # Sagliklilik kontrolu (2026-07-08, LAB #110 dersi): cokus sonrasi ATR eski
+    # (yuksek-fiyat donemi) oynakligi tasirken fiyat dusukse stop/TP sifirin
+    # altina inebilir — fiyat negatif OLAMAZ, boyle plan matematiksel sacmadir.
+    if min(stop, tp1, tp2) <= 0:
+        gecerli = False
+        neden = "dejenere plan: stop/TP <= 0 (ATR fiyata gore asiri genis) -> VETO (girme)"
+    # Sagliklilik #2 (2026-07-16, USDC dersi): pegli/olu-oynaklik varliklarda stop
+    # girise yapisik kalir (USDC: stop %0.025) — fee mesafeyi asar, ustune yuvarlama
+    # seviyeleri cakistirip risk=0 "plan" yayinlatabilir. Iki kontrol birden:
+    elif stop_pct is not None and (stop_pct < STOP_PCT_TABAN or round(stop, d) == round(giris, d)):
+        gecerli = False
+        neden = (f"dejenere plan: stop girise yapisik (stop %{stop_pct} < %{STOP_PCT_TABAN}"
+                 f" veya yuvarlamada cakisiyor) -> VETO (girme)")
     return {
         "yon": yon,
         "giris": round(giris, d), "stop": round(stop, d),
@@ -268,12 +302,12 @@ def trade_plan(price, atr_val, swing_high, swing_low, ss, lsq):
         "pozisyon_buyukluk_pct": poz_pct,
         "ima_kaldirac": round(poz_pct / 100, 1) if poz_pct else None,
         "gecerli": gecerli,
-        "neden": "R/R yeterli (>=2)" if gecerli else "R/R<2 -> VETO (girme)",
+        "neden": neden,
     }
 
 
 # ============================== Tek sembol analizi ==============================
-def analyze_symbol(symbol):
+def analyze_symbol(symbol, th=None):
     k_scalp = get_klines(symbol, SCALP_TF)
     k_swing = get_klines(symbol, SWING_TF)
     price = k_scalp[-1]["c"]
@@ -284,13 +318,12 @@ def analyze_symbol(symbol):
     oi_24h = pct_change(oi_hist[0]["oi"], oi_hist[-1]["oi"]) if oi_hist else None
     oi_1h = pct_change(oi_hist[-12]["oi"], oi_hist[-1]["oi"]) if len(oi_hist) >= 12 else None
     ls = get_ls_ratio(symbol)
-    top_ls = get_top_ls_ratio(symbol)
 
-    sh, sl = swing_levels(k_scalp)
-    th = get_thresholds(symbol)
-    # Sikismada 1s OI deltasi kullanilir (scalp/swing icin responsive); esikler per-symbol kalibre
+    sh, sl = swing_levels(k_swing)   # 1h yapisal seviyeler (plan girisi + sikisma yakinligi)
+    th = get_thresholds(symbol) if th is None else th   # tarayici kendi kalibre esigini verebilir
+    # Sikismada 1s OI deltasi kullanilir (1h plan dilimiyle uyumlu); esikler per-symbol kalibre
     ss, lsq, note = squeeze_scores(price, fund["funding"], oi_1h, ls, sh, sl, th)
-    plan = trade_plan(price, atr(k_scalp), sh, sl, ss, lsq)
+    plan = trade_plan(price, atr(k_swing), sh, sl, ss, lsq)   # swing-1h: ATR de 1h
 
     def tf_block(klines):
         vw = vwap(klines)
@@ -318,7 +351,6 @@ def analyze_symbol(symbol):
             "oi_delta_1h_pct": round(oi_1h, 2) if oi_1h is not None else None,
             "oi_delta_24h_pct": round(oi_24h, 2) if oi_24h is not None else None,
             "ls_ratio": round(ls, 3),
-            "top_ls_ratio": round(top_ls, 3),
         },
         "levels": {
             "swing_high": round(sh, 2),
@@ -333,6 +365,23 @@ def analyze_symbol(symbol):
 
 
 # ============================== Calisma dongusu ==============================
+def atomik_yaz(path, obj):
+    """JSON'u atomik yaz (tmp + os.replace): okuyucu asla yarim dosya gormez.
+    signals/makro/rejim/esikler ayni anda baska surecler tarafindan okunur."""
+    path = Path(path)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def atomik_yaz_metin(path, text):
+    """atomik_yaz ile ayni garanti, JSON-olmayan dosyalar icin (ornek: HTML rapor)."""
+    path = Path(path)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    os.replace(tmp, path)
+
+
 def run_once():
     out = {"updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
            "source": "binance-futures-rest", "symbols": {}}
@@ -341,7 +390,7 @@ def run_once():
             out["symbols"][sym] = analyze_symbol(sym)
         except Exception as e:
             out["symbols"][sym] = {"error": f"{type(e).__name__}: {e}"}
-    OUT_FILE.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    atomik_yaz(OUT_FILE, out)
     return out
 
 

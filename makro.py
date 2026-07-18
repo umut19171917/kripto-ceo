@@ -36,7 +36,8 @@ SOK_MIN_ALT = 2      # en az 2 alt ayni anda dusmeli -> esZAMANLI risk-off
 
 # Takvim (OTOMATIK - ForexFactory ucretsiz JSON, anahtarsiz)
 FF_URL = "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
-TAKVIM_TAZE_SAAT = 6   # makro-takvim.json bu sureden eskiyse yeniden cek
+TAKVIM_TAZE_SAAT = 6    # makro-takvim.json bu sureden eskiyse yeniden cek
+TAKVIM_ESKI_SAAT = 48   # dosya bu sureden eski = FF cekimi gunlerdir basarisiz -> gercek sorun
 
 
 # ============================== Yahoo (makro fiyatlar) ==============================
@@ -85,19 +86,32 @@ def takvim_guncelle(zorla=False):
                         "etki": "yuksek" if e["impact"] == "High" else "orta",
                         "zaman": t.isoformat()})
     if olaylar:
-        TAKVIM_FILE.write_text(json.dumps(
-            {"_kaynak": "ForexFactory/FairEconomy (otomatik)",
-             "guncellendi": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-             "olaylar": olaylar}, ensure_ascii=False, indent=2), encoding="utf-8")
+        olcucu.atomik_yaz(TAKVIM_FILE,
+                          {"_kaynak": "ForexFactory/FairEconomy (otomatik)",
+                           "guncellendi": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                           "olaylar": olaylar})
     return olaylar
 
 
 def takvim_kapisi(now):
+    """guncel_mi = 'GELECEK olay var mi' (veto mantigi icin). Dosyanin kendisinin
+    sagligi AYRI alan: dosya_durum yok/eski/taze (T3 duzeltmesi 2026-07-04 —
+    'gelecek olay yok' normaldir, uyari degildir; uyari sadece dosya sorununda)."""
     try:
-        olaylar = json.loads(TAKVIM_FILE.read_text(encoding="utf-8")).get("olaylar", [])
+        data = json.loads(TAKVIM_FILE.read_text(encoding="utf-8"))
+        olaylar = data.get("olaylar", [])
     except Exception:
         return {"sonraki": None, "guncel_mi": False, "saat_kala": None,
-                "yuksek_saat": None, "fomc_saat": None}
+                "yuksek_saat": None, "fomc_saat": None,
+                "dosya_durum": "yok", "dosya_yas_saat": None}
+    try:
+        g = datetime.fromisoformat(data.get("guncellendi"))
+        if g.tzinfo is None:
+            g = g.replace(tzinfo=timezone.utc)
+        dosya_yas = round((now - g).total_seconds() / 3600, 1)
+    except Exception:
+        dosya_yas = None
+    dosya_durum = "eski" if (dosya_yas is not None and dosya_yas > TAKVIM_ESKI_SAAT) else "taze"
     gelecek = []
     for o in olaylar:
         try:
@@ -111,7 +125,8 @@ def takvim_kapisi(now):
             continue
     if not gelecek:
         return {"sonraki": None, "guncel_mi": False, "saat_kala": None,
-                "yuksek_saat": None, "fomc_saat": None}
+                "yuksek_saat": None, "fomc_saat": None,
+                "dosya_durum": dosya_durum, "dosya_yas_saat": dosya_yas}
     gelecek.sort(key=lambda x: x[0])
     saat0, o0 = gelecek[0]
     yuksekler = [(s, o) for s, o in gelecek if o.get("etki") == "yuksek"]
@@ -121,7 +136,7 @@ def takvim_kapisi(now):
             "yuksek_olay": yuksekler[0][1]["olay"] if yuksekler else None,
             "yuksek_saat": round(yuksekler[0][0], 1) if yuksekler else None,
             "fomc_saat": round(fomclar[0][0], 1) if fomclar else None,
-            "guncel_mi": True}
+            "guncel_mi": True, "dosya_durum": dosya_durum, "dosya_yas_saat": dosya_yas}
 
 
 # ============================== Sok ayak izi (Binance) ==============================
@@ -203,8 +218,13 @@ def hesapla():
     except Exception:
         pass
 
-    if not tak.get("guncel_mi"):
-        notlar.append("UYARI: makro-takvim.json guncel degil -> gercek tarihleri gir")
+    # T3 duzeltmesi: "gelecek olay yok" NORMAL (hafta sonu/hafta bitti), uyari degil.
+    # Uyari sadece dosyanin kendisi sorunluysa (yok ya da FF cekimi ~2 gundur basarisiz).
+    ds = tak.get("dosya_durum")
+    if ds == "yok":
+        notlar.append("UYARI: makro-takvim.json yok/okunamiyor -> olay VETO'su devre disi")
+    elif ds == "eski":
+        notlar.append(f"UYARI: takvim {tak.get('dosya_yas_saat')}s guncellenemedi -> olay VETO'su bayat olabilir")
     if not notlar:
         notlar.append("temiz - engel yok")
 
@@ -217,7 +237,7 @@ def hesapla():
 def write_makro(path=None):
     path = Path(path) if path else MAKRO_FILE
     out = hesapla()
-    path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    olcucu.atomik_yaz(path, out)
     return out
 
 

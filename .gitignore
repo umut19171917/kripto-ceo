@@ -10,9 +10,24 @@ rejim.json
 esikler.json
 makro-takvim.json
 olcucu.log
+radar-durum.json
+radar.log
+likidasyon-esik.json
+ozet-durum.json
+radar-defteri.html
 
 # KISISEL sicil (tahmin gecmisi) - paylasilmaz
 kripto-defter.json
+radar-defter.json
+
+# Telegram bot token'i (kisisel) - paylasilmaz
+telegram.json
+
+# Coinalyze API anahtari (kisisel, salt-veri) - paylasilmaz
+coinalyze.json
+
+# LLM devir dosyasi: kisisel sicili gomuyor + tum kaynagi kopyalayan uretilen artefakt (eskir) - yerel
+SISTEM-DEVIR-LLM.md
 
 # Test artiklari
 _test_*.json
