@@ -78,7 +78,9 @@ Yahoo DXY / FF takvim─┘         │
 - `bosluk.py` — PC kapalıyken oluşan boşluğu geri-doldurma (açık tahminleri kesin çözer).
 - `bildirim.py` — Telegram gönderimi (fail-safe no-op).
 - `durum.py` — anlık durum raporu (çift-tık, sözel format).
-- `backtest.py` / `ileritest.py` / `ileritest2.py` — doğrulama araçları (bkz. §9).
+- `backtest.py` / `ileritest.py` / `ileritest2.py` / `aday_testi.py` — doğrulama araçları (bkz. §9).
+- `yedek.py` + `yedek.bat` — kritik dosyaların günlük Google Drive yedeği (tarihli klasör,
+  son 14 gün, idempotent + fail-safe; izleyici günde 1 kez otomatik çağırır).
 
 **Veri/sicil (gitignore'lu, PUSH EDİLMEZ):**
 - `kripto-defter.json` — ana sicil (K2 ölçümü, kişisel).
@@ -172,7 +174,39 @@ kâr hedefi"). Telegram ve durum.py AYNI fonksiyonları kullanır (iki çıktı 
   dilimde). B1 dersi: in-sample "funding 6/6 pozitif" bulgusu OOS'ta çöktü → tek geçerli
   edge testi canlı K2 sicili.
 - `ileritest2.py` — trend filtresi + geniş-stop walk-forward. Sonuç: geniş-stop çürüdü;
-  trend filtresi hafif+tutarlı (+0.02-0.03R), K2 adayı.
+  trend filtresi +0.02-0.03R (⚠ aşağıdaki gürültü tabanı bulgusundan sonra ŞÜPHELİ).
+- `aday_testi.py` — **K2 aday sınavı** (2026-07-27). Yöntem: her aday TEK DEĞİŞKEN olarak
+  canlı config'e karşı, EŞLİ, aynı fold'larda; dev kombinasyon ızgarası kurulmaz.
+  `_cache/` günlük veri önbelleği → tekrar koşular anında.
+
+### 9.1 ADAY SINAVI SONUÇLARI (2026-07-27, 11 coin × 540g × 12 fold)
+Baz (canlı config): 3210 işlem, %34 isabet, netR **+64.1**, işlem başına **+0.020R**, pozitif fold **4/12**
+
+| Aday | İşlem | netR | İşlem başına | pozF | Hüküm |
+|---|---|---|---|---|---|
+| **F&G kapısı** (≥75 LONG yok, ≤25 SHORT yok) | 2300 | **+130.7** | **+0.057** | **8/12** | ✅ EN GÜÇLÜ |
+| **OYNAK'ta LONG yok** (SHORT serbest) | 2377 | +90.3 | +0.038 | 5/12 | ⚠ umutlu, veri-türetilmiş |
+| SAKIN-only (OYNAK tamamen atlanır) | 1360 | +55.5 | +0.041 | 6/12 | işlemlerin %58'ini keser |
+| basis persentil | 531 | +21.5 | +0.041 | 6/12 | ❌ yoğunlaşma %235 |
+| lookback 200 (seviye penceresi) | 1338 | +44.4 | +0.033 | 5/12 | ❌ zikzak, monoton yön yok |
+| funding persentil | 631 | −8.3 | −0.013 | 7/12 | ❌ bazın altında |
+
+**F&G neden birinci:** (a) kural ÖN-KAYITLI — dış skill'den alındı, kendi verimizden
+türetilmedi; (b) fark (+0.037) gürültü tabanının ÜSTÜNDE; (c) çoğunluk-pozitif fold'a ulaşan
+TEK aday (8/12); (d) yoğunlaşma %68 — baz %141 (baz en iyi fold'suz NEGATİF, F&G'li değil).
+Mekanizma: kazancın tamamı SHORT yarısından (filtreli SHORT +0.139 = bazın 4.6 katı) =
+"aşırı korkuda dibi satma". ⚠ LONG yarısı fiilen test edilmemiş (8 işlem engelledi);
+⚠⚠ ortalamaya-dönüş bahsi — uzun süreli çöküşte en kârlı short dönemini kaçırtabilir.
+
+**Basis kapandı:** B1'de tek OOS-pozitif adaydı; tazeleme testinde yoğunlaşma %235 çıktı
+(toplam +21.5, tek fold +50.6 → o fold'suz −29.1). Fold-konsantrasyon şüphesi ikinci kez
+bağımsız doğrulandı → iki kez çürümüş.
+
+### 9.2 ⚠ GÜRÜLTÜ TABANI (kalan tüm kararları etkiler)
+Aynı baz config, 10 gün arayla: **+0.05 (07-17) vs +0.020 (07-27)** — hiçbir şey değişmeden
+ölçüm yarıya indi (tek fark: 540g pencerenin 10 gün kayması). **Sonuç: 0.03R'den küçük
+farklar ANLAMSIZ.** Doğrudan etkisi: trend filtresinin "+0.02-0.03R" bulgusu artık şüpheli.
+(Eşli/aynı-veri karşılaştırmalar pencere-kaymasından güvenilir, ama yine de temkin.)
 
 ---
 
@@ -186,33 +220,48 @@ kâr hedefi"). Telegram ve durum.py AYNI fonksiyonları kullanır (iki çıktı 
 
 ---
 
-## 11. ANLIK DURUM (2026-07-23 — eskir)
+## 11. ANLIK DURUM (2026-07-27 — eskir)
 
-- **Ana sicil K2 sayacı: 11/30** girilmiş-kapanmış swing (tempo ~5/hafta → ~3-4 hafta kaldı).
-- Ana sicil toplam: 41 kapalı, %34 isabet, brüt +3.23R / **net −12.28R**.
+- **Ana sicil K2 sayacı: ~13/30** girilmiş-kapanmış swing (tempo ~5/hafta → ~3 hafta kaldı).
+- Ana sicil toplam: 43 kapalı, %33 isabet, brüt +2.98R / **net −12.64R**. 4 açık.
 - Radar sicili: 26 kapalı, %25 isabet, net −7.37R.
 - Deneysel (LAB): 1 kapalı, net +0.86R.
-- Rejim: SAKIN (korelasyon 0.84, trend boğa). Makro kapı: ACIK.
+- Rejim: SAKIN (korelasyon 0.84-0.85, eşik dibinde salınıyor). Makro kapı: ACIK.
+- Açık risk: LONG %2.0 / SHORT %2.0 → **her iki yönde tavan dolu**, yeni tahmin açılmıyor.
 - **Hüküm:** kanıtlanmış edge YOK; her iki sicil negatif; disiplin = veri biriktir, K2'yi bekle.
 
 ---
 
 ## 12. K2 / K3 GÜNDEMİ (sırası gelince, veriyle)
 
-**K2 günü değerlendirilecek (canlı değişiklik değil, sorular):**
-- OYNAK-kapı kuralı (kayıplar oynak rejimde mi kümeleniyor)
-- Korelasyon histerezisi (0.83-0.85 bandında bayrak fır dönmesi)
-- Skor tabanı 70→75 | L/S bileşenini at/kalibre et | mutlak funding tabanı
-- Trend filtresi (ileritest2 OOS kanıtı) | funding+trend kombosu (ön-kayıtlı test)
-- **Fear & Greed endeksi** (ileritest2'ye aday filtre olarak ekle, redundant mı bak — skill dersi)
-- Likidasyon verisinin skora katkısı
+**K2 GÜNÜ — ÖNCELİK SIRASI** (2026-07-27 aday sınavının çıktısı; §9.1'e bak):
+1. ✅ **F&G kapısı** — sınavdan birinci çıktı; ön-kayıtlı, gürültü üstü, tek çoğunluk-pozitif.
+   O gün: SHORT-yarısı tek başına vs tam kural + taze fold'larda tekrar.
+2. ⚠ **OYNAK'ta LONG yok** — en iyi toplam ama kural VERİDEN türetildi → ön-kayıtlı tekrar şart.
+   Ayrıca canlı sicilin rejim damgalı kayıtlarıyla çapraz kontrol.
+3. Korelasyon histerezisi (1 veya 2 kabul edilirse önemi artar)
+4. Skor tabanı 70→75 | L/S bileşenini at (ikisi de VERİ-BLOKE: derin OI/LS geçmişi yok →
+   sadece canlı sicille test edilebilir)
+5. Likidasyon verisinin skora katkısı | monotonluk testi tekrarı (swing verisiyle)
+6. ⚠ Trend filtresi — gürültü tabanı bulgusundan sonra ŞÜPHELİ, yeniden sınanmalı
+
+❌ **DÜŞENLER (tekrar açma):** seviye penceresi, mutlak funding tabanı, basis (iki kez),
+geniş-stop/zaman-aşımı çıkışı.
+
+⚠ **YÖNTEM UYARISI:** K2 günü hepsini birden uygulama — **1-2 değişiklik**, gerisi sonraki
+tura. Aksi halde sonraki 30 işlem iyi/kötü gittiğinde hangisinin etkilediği ölçülemez.
 
 **K3 günü (gerçek para öncesi zorunlu):**
 - Gap/kayma nicelleştirme (sicilimizin çalkantıda iyimserliği)
 - Bileşik aşınma / volatilite aşındırması (pozisyon boyutlamada varyans drenajı)
 - Açık pozisyon ara-uyarıları ("stop'a yaklaştın / kâr al" — skill dersi)
+- Defter GERÇEK işlemleri de kaydetsin (`pozisyonlar` dizisi kullanılmıyor)
+- Otonom kâğıt-ticaret botu (dış skill dersi) | BTC min-notional kısmi-TP kontrolü
 
-**Ertelenmiş:** B2 (makro girdi: 10Y/ETH-BTC denemesi, tetik: K2 veya basis).
+**Ertelenmiş:** B2 (makro girdi: 10Y/ETH-BTC denemesi; basis düştüğü için tetik artık yalnız K2).
+
+**Küçük açık sınırlar:** spread/likidite kontrolü YOK | takvim hafta-devri boşluğu (yalnız
+`thisweek` çekiliyor) | tarayici.kalibre ~200 funding kaydı | kademe tespiti ~2-4dk gecikmeli.
 
 ---
 
