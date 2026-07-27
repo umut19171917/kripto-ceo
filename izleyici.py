@@ -32,6 +32,7 @@ import defter       # tahmin kaydi + sonuc takibi (kripto-defter.json)
 import bosluk       # bosluk kurtarma (PC kapali kaldigi araligi tamamlar)
 import bildirim     # Telegram kanali (C1); token yoksa sessiz no-op
 import likidasyon   # Coinalyze REST likidasyon beslemesi (olu WS'in yerine; ~2-3dk gecikmeli)
+import yedek        # kritik dosyalarin gunluk Google Drive yedegi (idempotent, fail-safe)
 
 # ============================== CONFIG ==============================
 WS_BASE = "wss://fstream.binance.com/stream"
@@ -302,6 +303,14 @@ async def ozet_loop():
                     olcucu.atomik_yaz(OZET_DURUM_FILE, {"son_ozet_gun": gun})
         except Exception as e:
             olcucu.log_line(f"[OZET] hata: {type(e).__name__}: {e}")
+        # Gunluk Google Drive yedegi (Telegram'dan BAGIMSIZ; idempotent: gunun
+        # klasoru varsa is yapmaz -> gunde 1 gercek yedek. Drive kapaliysa sessiz atlar).
+        try:
+            yapildi, mesaj = yedek.gunluk_yedek()
+            if yapildi:
+                olcucu.log_line(f"[YEDEK] {mesaj}")
+        except Exception as e:
+            olcucu.log_line(f"[YEDEK] hata: {type(e).__name__}: {e}")
         await asyncio.sleep(300)
 
 

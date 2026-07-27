@@ -33,3 +33,6 @@ SISTEM-DEVIR-LLM.md
 _test_*.json
 _t_*.json
 test-*.json
+
+# Aday testi veri onbellegi (gunluk yeniden uretilir)
+_cache/
