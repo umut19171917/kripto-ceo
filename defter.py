@@ -152,8 +152,13 @@ def mesaj_sinyal(token, yon, giris, stop, tp1, tp2, rr1, risk_pct=None, skor=Non
         f"Kaldirac: {kald_s}\n\n"
         f"Giris fiyati: {giris}\n"
         f"Zarari-kes (stop): {stop} -> fiyat buraya {stop_yon} cik, kayip = portfoyun %{risk_pct:g}'i\n"
-        f"Kar hedefi (TP1): {tp1} -> fiyat buraya {tp_yon} karinin bir kismini al (R/R {rr1})\n"
-        f"Kar hedefi (TP2): {tp2}\n\n"
+        # 2026-08-09 (dis denetim BULGU 8): sicil TP1'de TAM CIKIS olcuyor (coz()
+        # TP1 degince pozisyonu kapatip R=rr1 yaziyor). Mesaj "karin bir kismini al"
+        # diyordu -> kullaniciya ONERILEN icra ile OLCULEN strateji farkliydi.
+        # Metin muhasebeyle hizalandi; kismi-cikis modeli isteniyorsa coz()'a
+        # eklenmeli (K2 sonrasi, yeni konfig etiketiyle).
+        f"Kar hedefi (TP1): {tp1} -> fiyat buraya {tp_yon} POZISYONU KAPAT (R/R {rr1})\n"
+        f"Kar hedefi (TP2): {tp2}  (TP1 vurulmadan buraya gelirse daha buyuk kar)\n\n"
         f"{alt}"
         f"Emir SENDE - bu bir oneri, otomatik islem acilmaz."
     )
@@ -240,6 +245,37 @@ def rejim_damga():
                 "etkin_min_skor": m.get("min_skor", 0)}
     except Exception:
         return {}
+
+
+def k1m_kapanmis_araliktan(sym, t0_ms, tavan=25_000):
+    """t0_ms'den ITIBAREN tum KAPANMIS 1dk mumlari — SAYFALAMALI.
+    `k1m_kapanmis`in tek-istek (max 1440dk = 24s) sinirini kaldirir.
+
+    GEREKCE (2026-08-09, dis denetim BULGU 4): 24 saatten uzun kapaliliklarda
+    bosluk.py 5dk muma dusuyordu. Iki sorun: (1) MAX_BOSLUK_SAAT=24 A bolumunun
+    mum penceresini de kirpiyordu -> 72s kapalilikta ~46s HIC gorulmuyor, acik
+    tahminler gercekte TP/stop olmus olsa bile 'tetiklenmedi' damgasi aliyor ve
+    R muhasebesinden TAMAMEN dusuyordu; (2) 5dk mumda 'ayni mumda stop+TP -> STOP'
+    kurali 1dk'ya gore cok daha sik atesler -> uzun-bosluk kayitlari sistematik
+    KOTUMSER cozuluyordu (defter'in 'canli ve bosluk TEK muhasebe' iddiasi bu
+    noktada tutmuyordu). Sayfalama ikisini birden kapatir: tek granul (1dk), tam kapsam."""
+    out, cur = [], int(t0_ms)
+    simdi_ms = time.time() * 1000
+    while cur < simdi_ms and len(out) < tavan:
+        try:
+            raw = olcucu._get("/fapi/v1/klines",
+                              {"symbol": sym, "interval": "1m", "startTime": cur, "limit": 1500})
+        except Exception:
+            break
+        if not raw:
+            break
+        son_t = raw[-1][0]
+        out.extend({"t": k[0], "h": float(k[2]), "l": float(k[3]), "c": float(k[4])}
+                   for k in raw if k[0] + 60_000 <= simdi_ms)
+        if son_t + 60_000 <= cur:      # ilerleme yok -> sonsuz donguyu kes
+            break
+        cur = son_t + 60_000
+    return out
 
 
 def _fiyat_yuvarla(x):
@@ -447,6 +483,22 @@ def guncelle(snapshot):
     return d
 
 
+def _isabet_kovalari(kapali):
+    """(kazanc, kayip, girilmis) — isabet oraninin paydasi.
+    DUZELTME (2026-08-09, dis denetim BULGU 6): eskiden zaman_asimi kayitlari
+    toplam R'ye DAHILDI ama isabet paydasindan HARICTI -> ayni metrik setinde iki
+    farkli evren. zaman_asimi de GIRILMIS bir islemdir (tetiklendi, mark-to-market
+    R'si var) -> paydaya girer; sonuc_R>0 ise kazanc, aksi halde kayip sayilir.
+    NOT: bu bir RAPORLAMA duzeltmesidir, karar mantigina DOKUNMAZ (K2 dondurma
+    kuralini ihlal etmez). Canli veride 8/8 zaman_asimi pozitifti -> duzeltme
+    isabet oranini YUKSELTIR (dis denetimin tahmin ettigi yonun TERSI)."""
+    kazanc = [t for t in kapali if t["durum"] in ("tp1", "tp2")
+              or (t["durum"] == "zaman_asimi" and (t.get("sonuc_R") or 0) > 0)]
+    kayip = [t for t in kapali if t["durum"] == "stop"
+             or (t["durum"] == "zaman_asimi" and (t.get("sonuc_R") or 0) <= 0)]
+    return kazanc, kayip, kazanc + kayip
+
+
 def ozet():
     """ANA sicil ozeti (K2 olcumu): geri-doldurma VE deneysel (LAB) kayitlar HARIC.
     (Duzeltme 2026-07-05: eski surum geri-doldurmayi da sayiyordu -> durum.py'nin
@@ -457,9 +509,7 @@ def ozet():
          and t.get("sicil") != "deneysel"]
     acik = [t for t in T if t["durum"] in ("beklemede", "izleniyor")]
     kapali = [t for t in T if t["durum"] in ("tp1", "tp2", "stop", "zaman_asimi")]
-    kazanc = [t for t in kapali if t["durum"] in ("tp1", "tp2")]
-    kayip = [t for t in kapali if t["durum"] == "stop"]
-    girilmis = kazanc + kayip
+    kazanc, kayip, girilmis = _isabet_kovalari(kapali)
     toplam_R = round(sum((t.get("sonuc_R") or 0) for t in kapali), 2)
     toplam_net_R = round(sum((net_R(t) or 0) for t in kapali), 2)
     isabet = round(len(kazanc) / len(girilmis) * 100, 1) if girilmis else None

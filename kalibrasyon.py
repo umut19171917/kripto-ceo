@@ -98,12 +98,45 @@ def compute_thresholds(symbol):
     rates, _, _ = funding_rates(symbol)
     s = sorted(rates)
     pos = sorted(d for d in oi_1h_deltas(symbol) if d > 0)
-    return {
+    th = {
         "neutral": round(percentile(s, 50), 8),        # medyan
         "long_crowded": round(percentile(s, 85), 8),   # ust %15 -> long kalabalik
         "short_crowded": round(percentile(s, 15), 8),  # alt %15 -> short kalabalik
         "oi_rising": round(percentile(pos, 80), 4) if pos else 0.4,
     }
+    uyari = saglik_kontrol(th)
+    if uyari:
+        th["saglik_uyari"] = uyari      # SALT BAYRAK — davranisi ETKILEMEZ (asagiya bak)
+    return th
+
+
+# Binance USD-M funding tavani (standart semboller): %0.01 = 0.0001
+FUNDING_TAVAN = 0.0001
+
+
+def saglik_kontrol(th):
+    """Dejenere esik tespiti (2026-08-09, dis denetim BULGU 5). SALT TESPIT:
+    esikleri DEGISTIRMEZ, sadece bayrak dondurur.
+    GEREKCE (bilincli): fallback uygulamak BNB'nin canli skorlamasini ANINDA
+    degistirirdi; K2'ye 6 islem kala olcumu bozar. Once GORUNUR yapiyoruz,
+    duzeltme K2 gundeminde (o gun konfig etiketiyle birlikte).
+    Gercek bulgular (2026-08-09 esikler.json):
+      - BNBUSDT: neutral == short_crowded == 0.0 -> SHORT-squeeze funding kolu OLU
+      - 6 sembolde long_crowded funding TAVANINA yapismis (kalibrasyon bilgi uretmiyor)
+      - LABUSDT: short_crowded -%0.51 (pratikte ulasilamaz) -> SHORT kolu kapali"""
+    n, lc, sc = th.get("neutral"), th.get("long_crowded"), th.get("short_crowded")
+    if None in (n, lc, sc):
+        return "eksik esik"
+    u = []
+    if not (sc < n < lc):
+        u.append("siralama-bozuk")
+    if sc == n:
+        u.append("short_crowded==neutral (SHORT-squeeze funding kolu olu)")
+    if lc == n:
+        u.append("long_crowded==neutral")
+    if lc >= FUNDING_TAVAN:
+        u.append("long_crowded funding tavaninda (ayrim gucu dusuk)")
+    return " | ".join(u) if u else None
 
 
 def write_config(path=None):

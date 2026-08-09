@@ -41,6 +41,12 @@ KOD_SIRASI = [
 JSON_DURUM = ["signals.json", "makro.json", "rejim.json", "esikler.json",
               "likidasyon-esik.json", "radar-durum.json"]
 
+# Baslaticilar: cift-tik bat'lar + Startup VBS'leri (otomatik baslama)
+BASLATICILAR = ["calistir.bat", "surekli-calistir.bat", "canli-izleyici.bat", "durum.bat",
+                "tarayici.bat", "radar-defteri.bat", "yedek.bat", "tamkod.bat", "hat-testi.bat"]
+STARTUP = Path.home() / "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup"
+VBSLER = [STARTUP / "KriptoIzleyici.vbs", STARTUP / "KriptoRadar.vbs"]
+
 
 def _oku(p, sinir=None):
     try:
@@ -119,6 +125,17 @@ def uret():
             # 4 backtick: gomulen kaynak 3-backtick icerebilir (tamkod.py'nin kendisi
             # markdown uretiyor) -> uzun cit kisa citi yutar, render kirilmaz.
             P.append(f"\n### `{d}` ({satir} satır)\n\n" + "````python\n" + _oku(yol) + "\n````\n")
+
+    P.append("\n## BAŞLATICILAR — çift-tık bat'lar + Startup VBS'leri\n")
+    for d in BASLATICILAR:
+        yol = PROJE / d
+        if not yol.exists():
+            continue
+        P.append(f"\n### `{d}`\n\n" + "````bat\n" + _oku(yol) + "\n````\n")
+    for v in VBSLER:
+        if v.exists():
+            P.append(f"\n### `{v.name}` (Startup klasörü — her logon'da otomatik başlatır)\n\n"
+                     + "````vb\n" + _oku(v) + "\n````\n")
 
     P.append("\n\n---\n\n# EK B — ANLIK ÇALIŞMA-ANI DURUMU (JSON)\n")
     P.append("\n> Bu dosyalar kod tarafından sürekli yeniden üretilir; anlık fotoğraftır.\n")

@@ -37,10 +37,11 @@ def _yas_dk(iso):
 
 def _ozet(lst):
     kapali = [t for t in lst if t["durum"] in ("tp1", "tp2", "stop", "zaman_asimi")]
-    kazanc = [t for t in kapali if t["durum"] in ("tp1", "tp2")]
-    kayip = [t for t in kapali if t["durum"] == "stop"]
     acik = [t for t in lst if t["durum"] in ("beklemede", "izleniyor")]
-    girilmis = kazanc + kayip
+    # isabet paydasi TEK KAYNAK: defter._isabet_kovalari (2026-08-09 duzeltmesi;
+    # zaman_asimi de girilmis islemdir -> paydaya girer, R isaretine gore siniflanir)
+    from defter import _isabet_kovalari
+    kazanc, kayip, girilmis = _isabet_kovalari(kapali)
     isabet = f"%{len(kazanc) / len(girilmis) * 100:.0f}" if girilmis else "-"
     R = sum((t.get("sonuc_R") or 0) for t in kapali)
     netR = sum((_net_R(t) or 0) for t in kapali) if _net_R else None
@@ -77,6 +78,17 @@ def main():
                   f"korelasyon {pr.get('korelasyon')}, trend {pr.get('trend')})")
         for n in mk.get("notlar", []):
             print(f"  - {n}")
+
+    # Esik saglik uyarilari (2026-08-09, dis denetim BULGU 5) — SALT BILGI, davranis
+    # degismedi; dejenere esikli sembolde skorun ilgili kolu koru olabilir.
+    esik = _j("esikler.json")
+    if esik:
+        uyarili = [(s, d["saglik_uyari"]) for s, d in (esik.get("symbols") or {}).items()
+                   if isinstance(d, dict) and d.get("saglik_uyari")]
+        if uyarili:
+            print(f"\nESIK SAGLIK UYARISI ({len(uyarili)} sembol — skor ayrim gucu dusuk):")
+            for s, u in uyarili:
+                print(f"  {s}: {u}")
 
     if sig:
         print("\nCOINLER (anlik):")

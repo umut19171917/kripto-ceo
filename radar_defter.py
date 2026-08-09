@@ -117,9 +117,8 @@ def ozet():
     T = d["tahminler"]
     acik = [t for t in T if t["durum"] in ("beklemede", "izleniyor")]
     kapali = [t for t in T if t["durum"] in ("tp1", "tp2", "stop", "zaman_asimi")]
-    kazanc = [t for t in kapali if t["durum"] in ("tp1", "tp2")]
-    kayip = [t for t in kapali if t["durum"] == "stop"]
-    girilmis = kazanc + kayip
+    # isabet paydasi TEK KAYNAK: defter._isabet_kovalari (2026-08-09 duzeltmesi)
+    kazanc, kayip, girilmis = defter._isabet_kovalari(kapali)
     gross = round(sum((t.get("sonuc_R") or 0) for t in kapali), 2)
     net = round(sum((defter.net_R(t) or 0) for t in kapali), 2)
     isabet = round(len(kazanc) / len(girilmis) * 100, 1) if girilmis else None

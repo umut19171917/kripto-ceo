@@ -5,12 +5,16 @@ PC acilinca izleyici bunu bir kez cagirir (tamamla()). signals.json'daki son
 "updated_at"e bakip bosluk suresini bulur ve:
 
   A) ACIK tahminleri (beklemede/izleniyor) o aradaki GERCEK 1dk mumlariyla,
-     kronolojik olarak tetik/TP/stop kontrol edip DOGRU sonuclandirir. (Kesin.)
+     kronolojik olarak tetik/TP/stop kontrol edip DOGRU sonuclandirir.
+     (2026-08-09'dan beri bosluğun TAMAMI kapsanir — sayfalamali 1dk mum;
+      oncesinde >23s bosluklarda 5dk muma dusuluyor ve MAX_BOSLUK_SAAT ile
+      kirpiliyordu, bkz. defter.k1m_kapanmis_araliktan docstring.)
   B) Bosluk araliginda kacirilan >=70 setuplari tarihsel veriden yeniden kurar,
      "geri-doldurma" etiketiyle deftere ekler ve mumlarla sonuclandirir.
      (YAKLASIK: funding 8s granul, likidasyon yok, makro atlanir -> ayri tutulur.)
 
 A bolumu sicili korur; B bolumu ogrenme/backtest verisi ekler (etiketli).
+MAX_BOSLUK_SAAT yalnizca B'yi sinirlar; A bosluğun tamamini gorur.
 """
 
 import json
@@ -147,18 +151,17 @@ def tamamla(backfill=True):
     gerekli_dk = int(min(bosluk, MAX_BOSLUK_SAAT) * 60) + 90
     d = defter._yukle()
 
-    # cozum + plan mum onbellegi (bir kez cek)
+    # A bolumu mum penceresi: bosluğun TAMAMI (MAX_BOSLUK_SAAT ile KIRPILMAZ).
+    # 2026-08-09 (dis denetim BULGU 4): eskiden gerekli_dk MAX_BOSLUK_SAAT'e kirpiliydi
+    # ve >23s'te 5dk muma dusuyordu -> uzun kapaliliklarda acik tahminler kor kaliyor,
+    # 'tetiklenmedi' damgasi alip R muhasebesinden dusuyordu + 5dk granul kotumser
+    # cozuyordu. Artik TEK granul (1dk) + TAM kapsam (sayfalamali).
+    # NOT: MAX_BOSLUK_SAAT yalnizca B bolumunu (kacan setup geri-doldurma) sinirlar.
+    a_t0_ms = int((son.timestamp() - 90 * 60) * 1000)   # bosluk basi - 90dk emniyet
     k1m_cache, kplan_cache = {}, {}
     for sym in olcucu.SYMBOLS:
         try:
-            if gerekli_dk <= 1400:
-                k1m_cache[sym] = defter.k1m_kapanmis(sym, gerekli_dk)
-            else:
-                # uzun bosluk (>~23s): 1m tek istege sigmaz -> KAPANMIS 5m mumlarla coz
-                # (swing-1h stoplar genis, 5dk granul yeterli; ayni temkinli kurallar)
-                raw = olcucu.get_klines(sym, "5m", min(1500, gerekli_dk // 5 + 3))
-                simdi_ms = time.time() * 1000
-                k1m_cache[sym] = [x for x in raw if x["t"] + 300_000 <= simdi_ms]
+            k1m_cache[sym] = defter.k1m_kapanmis_araliktan(sym, a_t0_ms)
             kplan_cache[sym] = olcucu.get_klines(sym, "1h", 200)   # plan dilimi (swing-1h)
         except Exception:
             pass
