@@ -92,6 +92,23 @@ def _ort(x):
     return sum(x) / len(x) if x else None
 
 
+def _persentil(sirali, p):
+    if not sirali:
+        return None
+    i = min(len(sirali) - 1, max(0, int(round(p / 100 * (len(sirali) - 1)))))
+    return sirali[i]
+
+
+def esik_kademeleri(gozl, sym):
+    """Sembolun KENDI log dagilimindan kademeli esikler.
+    GEREKCE (2026-08-09): canli P99.5 esigi olcum icin cok sert — 35 gunde sembol
+    basina ~4 olay -> n=41 toplam, istatistiksel guc SIFIR. Kademeli esik hem
+    ornegi buyutur hem DOZ-TEPKI gosterir: gercek bir etki kademeli esikte
+    guclenmeli. Guclenmiyorsa gurultudur."""
+    tek_taraf = sorted(max(L, S) for ts, s, L, S in gozl if s == sym and max(L, S) > 0)
+    return {f"P{p}": _persentil(tek_taraf, p) for p in (90, 95, 99)}
+
+
 def olc(gozl, sym, ts_list, cl, esik):
     """{ufuk: {"long_liq": [...], "short_liq": [...], "taban": [...]}} — HAM getiriler
     (isaret cevrilmez; yonu veri soylesin)."""
@@ -139,51 +156,60 @@ def main():
 
     E = esikler()
     semboller = sorted({x[1] for x in g})
-    top = {h: {"long_liq": [], "short_liq": [], "taban": []} for h in UFUKLAR}
-    per = {}
+    KADEMELER = ["P90", "P95", "P99", "CANLI(P99.5)"]
+    top = {kd: {h: {"long_liq": [], "short_liq": [], "taban": []} for h in UFUKLAR}
+           for kd in KADEMELER}
+    per = {kd: {} for kd in KADEMELER}
     for sym in semboller:
-        esik = E.get(sym) or 1_000_000    # yoksa eski sabit CASCADE_USD
         try:
             K = backtest.klines_history(sym, TF, GUN)
         except Exception as e:
             print(f"  {sym}: fiyat cekilemedi ({type(e).__name__}) - atlandi", flush=True)
             continue
         ts_list, cl = [k["t"] for k in K], [k["c"] for k in K]
-        R = olc(g, sym, ts_list, cl, esik)
-        per[sym] = R
-        for h in UFUKLAR:
-            for kk in R[h]:
-                top[h][kk].extend(R[h][kk])
-        n1 = len(R[UFUKLAR[0]]["long_liq"])
-        n2 = len(R[UFUKLAR[0]]["short_liq"])
-        print(f"  {sym:<11} esik ${esik:>12,.0f} | LONG-liq {n1:>5} | SHORT-liq {n2:>5}", flush=True)
+        kd_esik = esik_kademeleri(g, sym)
+        kd_esik["CANLI(P99.5)"] = E.get(sym) or 1_000_000
+        satir = f"  {sym:<11}"
+        for kd in KADEMELER:
+            esik = kd_esik.get(kd) or 10 ** 12
+            R = olc(g, sym, ts_list, cl, esik)
+            per[kd][sym] = R
+            for h in UFUKLAR:
+                for kk in R[h]:
+                    top[kd][h][kk].extend(R[h][kk])
+            n = len(R[UFUKLAR[0]]["long_liq"]) + len(R[UFUKLAR[0]]["short_liq"])
+            satir += f" | {kd} ${esik:>10,.0f} n={n:<5}"
+        print(satir, flush=True)
 
     print()
     print("=" * 92)
-    print("  TOPLAM — kademe SONRASI ham fiyat degisimi (%) | edge = kosullu - taban")
-    print("  tez A (devam): LONG-liq sonrasi NEGATIF, SHORT-liq sonrasi POZITIF beklenir")
-    print("  tez B (fade) : tam TERSI")
+    print("  DOZ-TEPKI — kademe buyudukce etki gucleniyor mu? (gercek etki gucleNMELI)")
+    print("  tez A (devam): LONG-liq EDGE negatif + SHORT-liq EDGE pozitif (ZIT isaretler)")
+    print("  tez B (fade) : LONG-liq EDGE pozitif + SHORT-liq EDGE negatif")
     print("=" * 92)
-    print(f"  {'ufuk':<7}{'olay':<14}{'n':>8}{'ort chg':>11}{'taban':>10}{'EDGE':>10}")
     for h in UFUKLAR:
-        tb = _ort(top[h]["taban"])
-        for kk, ad in (("long_liq", "LONG likid"), ("short_liq", "SHORT likid")):
-            v = top[h][kk]
-            o = _ort(v)
-            if o is None or tb is None:
-                print(f"  +{h:<6}{ad:<14}{len(v):>8}{'—':>11}{'—':>10}{'—':>10}")
+        print(f"\n  --- ufuk +{h} saat ---")
+        print(f"  {'kademe':<15}{'L-liq n':>9}{'L EDGE':>10}{'S-liq n':>10}{'S EDGE':>10}{'yorum':>12}")
+        for kd in KADEMELER:
+            tb = _ort(top[kd][h]["taban"])
+            lo, so = _ort(top[kd][h]["long_liq"]), _ort(top[kd][h]["short_liq"])
+            ln, sn = len(top[kd][h]["long_liq"]), len(top[kd][h]["short_liq"])
+            if tb is None or lo is None or so is None:
+                print(f"  {kd:<15}{ln:>9}{'—':>10}{sn:>10}{'—':>10}{'veri yok':>12}")
                 continue
-            print(f"  +{h:<6}{ad:<14}{len(v):>8,}{o:>+11.3f}{tb:>+10.3f}{o - tb:>+10.3f}")
-        print()
+            le, se = lo - tb, so - tb
+            yorum = "FADE" if (le > 0 and se < 0) else ("DEVAM" if (le < 0 and se > 0) else "karisik")
+            print(f"  {kd:<15}{ln:>9,}{le:>+10.3f}{sn:>10,}{se:>+10.3f}{yorum:>12}")
 
-    h = UFUKLAR[1]
+    kd, h = "P95", UFUKLAR[1]
+    print()
     print("=" * 92)
-    print(f"  SEMBOL BAZINDA (+{h}s, EDGE) — tutarlilik (tek sayiya guvenme)")
+    print(f"  SEMBOL BAZINDA ({kd}, +{h}s) — isaret tutarliligi")
     print("=" * 92)
     print(f"  {'sembol':<11}{'L-liq n':>9}{'L edge':>10}{'S-liq n':>10}{'S edge':>10}")
     say = {"long_liq": [0, 0], "short_liq": [0, 0]}
     for sym in semboller:
-        R = per.get(sym)
+        R = per[kd].get(sym)
         if not R:
             continue
         tb = _ort(R[h]["taban"])
@@ -192,22 +218,24 @@ def main():
         sat = f"  {sym:<11}"
         for kk in ("long_liq", "short_liq"):
             o = _ort(R[h][kk])
+            n = len(R[h][kk])
             if o is None:
-                sat += f"{len(R[h][kk]):>9}{'—':>10}" if kk == "long_liq" else f"{len(R[h][kk]):>10}{'—':>10}"
+                sat += f"{n:>9}{'—':>10}" if kk == "long_liq" else f"{n:>10}{'—':>10}"
                 continue
             e = o - tb
             say[kk][0 if e > 0 else 1] += 1
-            sat += (f"{len(R[h][kk]):>9,}{e:>+10.3f}" if kk == "long_liq"
-                    else f"{len(R[h][kk]):>10,}{e:>+10.3f}")
+            sat += f"{n:>9,}{e:>+10.3f}" if kk == "long_liq" else f"{n:>10,}{e:>+10.3f}"
         print(sat)
     print()
     for kk, ad in (("long_liq", "LONG likid"), ("short_liq", "SHORT likid")):
         print(f"  {ad} isaret: {say[kk][0]} sembolde pozitif / {say[kk][1]} negatif")
 
     print()
-    print("OKUMA: her iki olayin EDGE'i AYNI isaretteyse bu yon bilgisi degil, ortak")
-    print("piyasa hareketidir. Tez A icin LONG-liq NEGATIF + SHORT-liq POZITIF gerekir")
-    print("(zit isaretler). Buyukluk de onemli: <%0.5 hareket stop mesafesini tasimaz.")
+    print("OKUMA: (1) Her iki olayin EDGE'i AYNI isaretteyse yon bilgisi degil, ortak")
+    print("piyasa hareketidir. (2) DOZ-TEPKI sart: kademe buyudukce etki guclenmiyorsa")
+    print("gurultudur. (3) Buyukluk: <%0.5 hareket 2.5 ATR stop mesafesini tasimaz.")
+    print("(4) CANLI(P99.5) kademesi 35 gunde ~4 olay/sembol uretiyor -> canli kademe")
+    print("tespiti fiilen ATIL; olcum icin de istatistiksel guc vermiyor.")
 
 
 if __name__ == "__main__":

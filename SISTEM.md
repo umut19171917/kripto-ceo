@@ -178,6 +178,10 @@ kâr hedefi"). Telegram ve durum.py AYNI fonksiyonları kullanır (iki çıktı 
 - `aday_testi.py` — **K2 aday sınavı** (2026-07-27). Yöntem: her aday TEK DEĞİŞKEN olarak
   canlı config'e karşı, EŞLİ, aynı fold'larda; dev kombinasyon ızgarası kurulmaz.
   `_cache/` günlük veri önbelleği → tekrar koşular anında.
+- `skor_gucu.py` — canlı skorun ileri-tahmin gücü (964k kayıt). §9.3-A.
+- `sinyal_tarama.py` — aday sinyal eleme (koşullu getiri − koşulsuz taban). §9.3-B.
+- `fade_testi.py` — fade hipotezinin 540g rejim sınavı; `--bant uc|orta`. §9.3-D.
+- `fade_kontrol.py` — likidasyon olayı vs frekans-eşlenmiş fiyat şoku, eşli. §9.3-E.
 
 ### 9.1 ADAY SINAVI SONUÇLARI (2026-07-27, 11 coin × 540g × 12 fold)
 Baz (canlı config): 3210 işlem, %34 isabet, netR **+64.1**, işlem başına **+0.020R**, pozitif fold **4/12**
@@ -207,6 +211,51 @@ Aynı baz config, 10 gün arayla: **+0.05 (07-17) vs +0.020 (07-27)** — hiçbi
 ölçüm yarıya indi (tek fark: 540g pencerenin 10 gün kayması). **Sonuç: 0.03R'den küçük
 farklar ANLAMSIZ.** Doğrudan etkisi: trend filtresinin "+0.02-0.03R" bulgusu artık şüpheli.
 (Eşli/aynı-veri karşılaştırmalar pencere-kaymasından güvenilir, ama yine de temkin.)
+
+### 9.3 EDGE ARAMA (2026-08-09/10) — çekirdek tez ölçüldü, fade adayı sınandı
+**Neden:** K2 sayacı 25/30'a geldiğinde canlı sicil 3 kazanç / 22 kayıp (net −15,59R); binom
+hesabıyla "şanssızlık" ihtimali %1,5. Karar: **strateji ayarlamayı bırak, önce sinyalde bilgi
+var mı diye ölç.**
+
+**A. `skor_gucu.py` — ÇEKİRDEK TEZ DESTEKLENMEDİ.** 964k canlı skor kaydı (42g, 11 coin):
+skor yükseldikçe öngörü gücü artmıyor; "düşecek" denen anlarda fiyat rastgele bir ana göre
+DAHA AZ düşüyor. Ek: **21:1 yön asimetrisi** — SHORT sinyali 21 kat fazla; BTC/ETH/SOL/XRP/DOGE
+42 günde tek LONG vermedi.
+
+**B. `sinyal_tarama.py` — FADE adayı elemeyi geçti.** Likidasyon kademesi (35g, 933 olay):
+zorunlu SATIŞ'tan sonra fiyat YÜKSELİYOR, zorunlu ALIM'dan sonra DÜŞÜYOR — zıt işaretli,
+doz-tepkili. **Sistemin varsayımının TERSİ yön.**
+
+**C. ⛔ Coinalyze veri sınırı (2026-08-10 probu) — TEKRAR DENEME.** Likidasyon geçmişi:
+1saat granül ~60-65 gün, 5dk ~10-15 gün, 120g ve ötesi BOŞ. 540g walk-forward likidasyon
+verisiyle **imkânsız**.
+
+**D. `fade_testi.py` — GENEL FADE ÇÜRÜDÜ.** Hipotez fiyat üzerinden sınandı (likidasyon
+kademesi sebep, gözlenebilir iz fiyatta): 10 coin × 540g × 12 fold, walk-forward eşik,
+fold+sembol bazında taban çıkarımı, BOĞA/AYI ayrımı (BTC 50g SMA, %50/%50).
+
+| Band | Ön-kayıtlı hücre | düş EDGE | yük EDGE | Hüküm | Sembol | Fold |
+|---|---|---|---|---|---|---|
+| uç (P90/95/99) | W=1s, P95, +4s | −0,001% | +0,044% | DEVAM | 1/10 | 2/12 |
+| orta (P70/80/85) | W=1s, P80, +4s | −0,024% | +0,002% | DEVAM | **0/10** | 2/12 |
+
+Rejim ayrımı: BOĞA'da DEVAM, AYI'da sayısal olarak sıfır (±0,004%). 54 hücrede tutarlı FADE
+yok; +4s ufkunda baskın örüntü zayıf DEVAM (momentum). **Tüm büyüklükler %0,130 maliyet
+çizgisinin ALTINDA** → iki yönde de işlenebilir edge yok.
+
+**E. `fade_kontrol.py` + örtüşme probu — likidasyon ≠ "büyük hareket".** Aynı 35 günde,
+frekans eşlenmiş kontrol: likidasyon 3 ufukta da FADE (+4s: +0,063/−0,199 | +24s:
++0,332/−0,589); eşit sayıda en-sert fiyat hareketi karışık/zayıf. Sembol bazında FADE:
+likidasyon 6/10, fiyat 3/10. Örtüşme yalnız **%5** (±1 barla %19-36). Likidasyon olayları
+5dk hareket dağılımının **medyan %77'sinde** oturuyor, %27'si medyanın ALTINDA → ayrı olay
+sınıfı. Bu yüzden D bulgusu B'yi **doğrudan çürütmez**, ama genel mekanizmayı elinden alır.
+
+**HÜKÜM (2026-08-10):**
+1. Genel "sert hareket → geri dönüş" mekanizması 540 günde çürüdü — **üstüne strateji kurulmaz.**
+2. Likidasyona-özgü fade çürütülmedi ama **doğrulanamaz**: 35 gün, tek rejim, geçmiş veri yok.
+3. Tek dürüst yol **İLERİYE DÖNÜK doğrulama**: log zaten akıyor; `sinyal_tarama.py` pencere
+   büyüdükçe tekrar koşulur (~6 ayda 200+ gün, iki rejim). Sıfır maliyet, gerçek OOS.
+4. O güne kadar likidasyon fade'i üzerine **parametre/strateji değişikliği YOK.**
 
 ---
 
