@@ -257,6 +257,44 @@ sınıfı. Bu yüzden D bulgusu B'yi **doğrudan çürütmez**, ama genel mekani
    büyüdükçe tekrar koşulur (~6 ayda 200+ gün, iki rejim). Sıfır maliyet, gerçek OOS.
 4. O güne kadar likidasyon fade'i üzerine **parametre/strateji değişikliği YOK.**
 
+### 9.4 KESİTSEL GÖRELİ GÜÇ (2026-08-11) — ilk zaman-serisi-DIŞI aile, düştü
+**Neden:** Bugüne kadarki her aday tek-coin/zaman-serisi sorusu soruyordu ("bu coin hareket
+edecek mi?") ve altısı da çürüdü. Bu test farklı bir aile: **"hangi coin hangisinden iyi?"**
+Kullanıcının "ayıda boğa yaşayan coinleri bulup ortak noktalarını arayalım" fikrinin
+yanlılıksız hali — kazananları seçmek yerine **her tarihte tüm evreni sırala**, kaybedeni de
+örneklemde tut, sıralamanın geleceği bilip bilmediğini ölç.
+
+`kesitsel_test.py` — ÖN-KAYIT koşmadan önce sabitlendi: sıralama 30g, ufuk 7g (üst üste
+binmeyen), 10 desil, evren = her tarihte önceki 30g medyan hacme göre en likit 100.
+Öğrenilen eşik YOK (desil kesimi kuralla tanımlı) → uydurma riski yapısal olarak düşük.
+525 sembol, 77 yeniden dengeleme, 7.700 coin-tarih gözlemi, %40 BOĞA.
+
+| Evren | üst−alt | 1 maliyet | 2 rejim | 3 dönem | 4 monoton | 5 yoğunlaşma | Hüküm |
+|---|---|---|---|---|---|---|---|
+| tüm (525) | +4,513% | ✅ | ✅ | ❌ 3/6 | ❌ 6/9 | ✅ | **düştü** |
+| eski (292) | +0,747% | ✅ | ✅ | ✅ 4/6 | ❌ 5/9 | ❌ | **düştü** |
+
+**+%4,5/hafta neden gerçek değil — teşhis üç bağımsız yoldan aynı yeri gösterdi:**
+1. **Medyan negatif.** Üst desil ortalaması +3,17% ama **medyanı −4,46%**. Tipik "güçlü" coin
+   ertesi hafta kaybediyor; ortalamayı bir avuç dev kazanan taşıyor.
+2. **Yoğunlaşma.** 77 tarihin en iyi 5'i toplam etkinin **%91'ini** taşıyor (en iyi tek tarih
+   +%133,6). Temizlenmiş evrende en iyi 3 tarih çıkarılınca toplam **işaret değiştiriyor**
+   (+57,5 → −20,6, yani %136). Basis'i iki kez öldüren örüntünün en uç hali.
+3. **Hayatta kalma kanalı.** Etkinin tamamı pencere içinde listelenen coinlerden: yeni
+   listelenenlerde üst−alt +10,43%, pencere başında var olanlarda +0,52% — ve medyanlarla
+   ikisi de negatif (−0,11% / −1,40%). Yükselip delist olanlar veride YOK.
+
+**Temizlenmiş evrende asıl bulgu momentum değil:** desil 1-8 hafifçe pozitif, **desil 0 ve
+desil 9 ikisi de negatif** (−1,33 / −0,59). Yani "her iki uçtaki sert hareket edenler
+sonradan geri kalıyor" — yönlü bilgi değil, oynaklık cezası.
+
+**ARAÇ DÜZELTMESİ:** B1'in yoğunlaşma dersi bu aracın resmi idam şartlarında YOKTU (5. şart
+sonradan eklendi). "tüm" evreni 5. şartı geçmişti — eksik ölçü aleti onu ayakta tutuyordu.
+Yeni testlerde yoğunlaşma şartı zorunlu.
+
+**AÇIK KALAN:** Bu test coin SINIFI sorusunu (§12 madde 🔴 0, 31 Temmuz ayrışma bulgusu)
+cevaplamaz — "bizim sinyalimiz orta ölçekte daha mı iyi çalışıyor" ayrı bir soru, hâlâ açık.
+
 ---
 
 ## 10. KARAR KAPILARI (disiplinin kalbi)
