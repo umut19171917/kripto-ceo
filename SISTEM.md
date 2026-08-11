@@ -292,8 +292,42 @@ sonradan geri kalıyor" — yönlü bilgi değil, oynaklık cezası.
 sonradan eklendi). "tüm" evreni 5. şartı geçmişti — eksik ölçü aleti onu ayakta tutuyordu.
 Yeni testlerde yoğunlaşma şartı zorunlu.
 
-**AÇIK KALAN:** Bu test coin SINIFI sorusunu (§12 madde 🔴 0, 31 Temmuz ayrışma bulgusu)
-cevaplamaz — "bizim sinyalimiz orta ölçekte daha mı iyi çalışıyor" ayrı bir soru, hâlâ açık.
+**AÇIK KALAN:** Bu test coin SINIFI sorusunu cevaplamaz → §9.5'te kapatıldı.
+
+### 9.5 COİN SINIFI (2026-08-11) — §12 madde 🔴 0 KAPANDI, hipotezin TERSİ çıktı
+**Önce kritik düzeltme:** 31 Temmuz'un "27 kat fark" bulgusu (çekirdek 11 majör −0,794R/işlem
+vs radar geniş evren −0,029R/işlem) **ÇİFT DEĞİŞKENLİYDİ.** 2026-08-11'de kodda doğrulandı:
+ana sicil sıkışma skoru ≥70 → seviye kırılımı planı kullanıyor; radar ise `|24s değişim| ≥ %20
+VE hacim ≥ 30M` alarmı. **İki sicil aynı sinyali kullanmıyor** → farkın coin sınıfından
+geldiği söylenemezdi. Hipotez çürük değil, **fiilen hiç test edilmemişti.**
+
+`sinif_testi.py` tek değişkenli halidir: CANLI config sabit (seviye-2.5, lookback 50,
+filtresiz), değişen tek şey coin sınıfı. Evren pencere BAŞINDAKİ 30g medyan hacme göre
+sıralanıp sabitlendi (sınıf ataması geleceğe bakmaz), 20'şerli üç kademe, 12 fold, 17.695 işlem.
+
+| Kademe | Medyan hacim | İşlem | İsabet | netR | **ortNetR** | pozFold |
+|---|---|---|---|---|---|---|
+| BÜYÜK (1-20) | $585M | 5.925 | %32 | −150,6 | **−0,025** | 8/12 |
+| ORTA (21-40) | $175M | 5.866 | %31 | −267,0 | **−0,046** | 7/12 |
+| KÜÇÜK (41-60) | $113M | 5.904 | %31 | −375,7 | **−0,064** | 5/12 |
+
+**Sıralama MONOTON ve hipotezin TERSİ yönünde:** coin büyüdükçe sonuç *iyileşiyor*.
+"Majörlerde kırılım kalıpları yutuluyor, ince coinlerde çalışır" beklentisi veriyle
+çelişiyor. Coin bazında da aynı: pozitif coin oranı 6/20 → 5/20 → 4/20, medyanlar
+−0,029 → −0,036 → −0,071.
+
+**İdam sınavı:** 1 ✅ (|−0,038| > 0,03 gürültü) · 2 ❌ **rejim** (BOĞA +0,002 / AYI −0,066 —
+fark yalnız ayıda var) · 3 ✅ 8/12 · 4 ✅ monoton · 5 ⚠ teknik olarak geçti ama toplam
+−0,509 → en iyi 3 fold çıkınca −0,016, yani farkın **%97'si 3 fold'dan**. **HÜKÜM: DESTEKLENMEDİ.**
+
+**ASIL SONUÇ — sorunun kendisini geçersiz kılan bulgu: üç kademe de NEGATİF.** "Hangisi daha
+az kötü" bir kârlılık sorusu değildir. Bu sinyalin kâr ettiği bir coin sınıfı yok → **havuz
+değiştirmek çözüm değil.**
+
+⚠ Kapsam sınırı: test en likit 60 coini kapsar (en ince kademe medyanı $113M); radarın
+evreni $30M'a kadar iniyor. O bant test edilmedi — ama (a) eğilimin yönü inceye gittikçe
+kötüleşiyor, (b) ince coinlerde delist yanlılığı ve spread en yüksek (spread verimiz hiç yok).
+İkisi birlikte "daha inceye inelim" beklentisini desteklemiyor.
 
 ---
 
