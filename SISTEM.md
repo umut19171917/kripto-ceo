@@ -391,6 +391,66 @@ YOK (DefiLlama ücretli) · opsiyon YOK · likidasyon 2-4dk gecikmeli · icra EL
 · risk kapıları ❓ ölçülmedi · sicil/muhasebe ✅ · ölçüm araçları ✅ · teslimat ✅.
 **Ölü kısım kodun ~%20'si; kalan %80 hangi fikirle çalışılırsa çalışılsın yeniden kullanılabilir.**
 
+### 9.8 K2 ÖNCESİ HAZIRLIK TURU (2026-08-15) — F&G düştü, makro kapısı öne çıktı
+Altı hazırlık işi tek turda yapıldı. **Sonuç: son tahmin adayı da düştü; buna karşılık
+canlı sicilden beklenmedik bir bulgu çıktı.**
+
+**B1 — F&G KAPISI ❌ DÜŞTÜ** (`fng_sinavi.py`). 2026-07-27'de +0,037 ile birinci çıkmıştı,
+ama o sınavda **2. (rejim) ve 5. (yoğunlaşma) şartları YOKTU.** Taze fold'larla, beş şartla:
+
+| Şart | Sonuç |
+|---|---|
+| 1. Gürültü tabanını aşıyor | ✅ +0,033 vs 0,030 — **kıl payı** |
+| 2. İki rejimde aynı yön | ⚠ BOĞA **+0,000** / AYI +0,063 — boğada hiçbir şey yapmıyor |
+| 3. Fold'ların çoğunda | ✅ 8/12 |
+| 4. İki bacak da fiilen kesiyor | ❌ **LONG bacağı %0 kesiyor** (1537→1532). Kural iki taraflı değil |
+| 5. En iyi 3 fold'suz ayakta | ❌ toplam +0,555 → **+0,001**. Avantajın **%100'ü 3 fold'dan** |
+
+Aynı yoğunlaşma örüntüsü basis'i (%235) ve kesitsel momentumu da öldürmüştü. **Tahmin ailesi
+artık 14 aday / 0 hayatta kalan.** ⚠ Ders: ölçü aletimiz aylarca eksikti (2, 4, 5 yoktu) ve
+bu eksiklik **iki adayı birden** hayatta tutmuştu.
+
+**B2 — SPREAD ✅ SORUN YOK** (`spread_olcum.py`). Aylardır açık duran ve üç denetimde K3'e
+ertelenen madde. 737 sembol, 5 örnek: medyan spread %0,021-0,028 → yarım spread %0,011-0,014.
+**Varsayımımız (%0,02/bacak) gerçeğin 1,4-1,9 KATI — yani muhafazakâr.** Spread/1R oranı:
+büyük %0,16 · orta %0,61 · küçük %0,43 (endişe eşiği %5). **Negatif sonuçlarımız gizli
+maliyetten değil.** ⚠ Sakin anda, top-of-book; derinlik ölçülmedi.
+
+**B3 — VETO KATMANI: ölçülecek bir şey yok.** R/R vetosu (`rr1 < 2.0`) **yapısal olarak hiç
+ateşlenemiyor**: rr1 = TP1_ATR/STOP_ATR = 5,2/2,5 = 2,08 sabit. Kalan iki veto (negatif
+fiyat, stop'un girişe yapışması) matematiksel saçmalığı engelleyen emniyet kontrolleri —
+seçicilik filtresi değil. **Vetolar "iyi işlemleri kesmiyor", çünkü normal kurulumda hiç
+ateşlenmiyorlar.** Ayrıca hiçbir yerde loglanmıyorlar (log'da 0 kayıt).
+
+**B4 — REJİM KÜMELENME ⭐ TEK POZİTİF BULGU** (`sicil_analiz.py`). Temmuz'dan beri işlenen
+rejim damgaları ilk kez okundu:
+
+| Makro kapısı | Ana sicil | Radar |
+|---|---|---|
+| ACIK | 41 işlem, %37, **+0,142R** | 87 işlem, %38, **+0,162R** |
+| DIKKAT | 17 işlem, %24, **−0,325R** | 23 işlem, %13, **−0,630R** |
+
+**İki BAĞIMSIZ sinyal (sıkışma skoru ve hareket alarmı) aynı yönü gösteriyor.** Birleşik:
+ACIK 128 işlem **+19,96R** · DIKKAT 40 işlem **−20,01R**. OYNAK/SAKIN ve korelasyon uçları da
+aynı yönde. ⚠ DIKKAT zaten boyutu yarıya indiriyor ve min_skor'u 80'e çekiyor — **buna rağmen**
+bu kadar kötü. ⚠⚠ Kural VERİDEN türetildi ve n=40 → ön-kayıtlı doğrulama şart, tek başına
+parametre değiştirmez.
+
+**B5 — FUNDING ÖDEME SAATİ ❌ DÜŞTÜ** (`funding_saati.py`). Ön-kayıtlı hipotez (yüksek
+funding'de ödeme öncesi baskı) **iki bacakta da tutmadı** (konum 7: +0,016% beklenen negatif;
+konum 1: −0,003% beklenen pozitif). En büyük etki %0,016 vs maliyet %0,130 — **8 kat altında**.
+En iyi 3 fold çıkınca işaret dönüyor. ⚠ İlk koşuda **birim hatası** etkiyi 100 kat büyük
+gösterip "maliyeti aşıyor" dedirtmişti; düzeltildi.
+
+**B6 — MONOTONLUK ❌ İLİŞKİ YOK.** skor↔netR korelasyonu: ana sicil **rho = −0,028** (n=58),
+radar **rho = −0,119** (n=110). Skor kovaları zikzak; en yüksek kova (95-100) **iki sicilde de
+en kötü**. Bu, `skor_gucu.py`'nin 964k kayıtla bulduğunun **canlı sicildeki bağımsız
+doğrulaması** — iki ayrı yöntem, aynı sonuç.
+
+**Yapısal not:** çıkış dağılımı tasarım gibi çalışıyor (stop medyanı tam −1,000R, tp1 +2,2R).
+İsabet %33, başabaş ~%32,5 → **sistem tam başabaş noktasında salınıyor.** Kâr da etmiyor,
+çökmüyor da; sonuçların ay-ay savrulması (Haz +9,4R · Tem −11,4R · Ağu +2,3R) bununla tutarlı.
+
 ---
 
 ## 10. KARAR KAPILARI (disiplinin kalbi)
@@ -428,16 +488,26 @@ yapıldı ve düzeltildi.
 
 ## 12. K2 / K3 GÜNDEMİ (sırası gelince, veriyle)
 
-**K2 GÜNÜ — ÖNCELİK SIRASI** (2026-07-27 aday sınavının çıktısı; §9.1'e bak):
-1. ✅ **F&G kapısı** — sınavdan birinci çıktı; ön-kayıtlı, gürültü üstü, tek çoğunluk-pozitif.
-   O gün: SHORT-yarısı tek başına vs tam kural + taze fold'larda tekrar.
-2. ⚠ **OYNAK'ta LONG yok** — en iyi toplam ama kural VERİDEN türetildi → ön-kayıtlı tekrar şart.
-   Ayrıca canlı sicilin rejim damgalı kayıtlarıyla çapraz kontrol.
-3. Korelasyon histerezisi (1 veya 2 kabul edilirse önemi artar)
-4. Skor tabanı 70→75 | L/S bileşenini at (ikisi de VERİ-BLOKE: derin OI/LS geçmişi yok →
-   sadece canlı sicille test edilebilir)
-5. Likidasyon verisinin skora katkısı | monotonluk testi tekrarı (swing verisiyle)
-6. ⚠ Trend filtresi — gürültü tabanı bulgusundan sonra ŞÜPHELİ, yeniden sınanmalı
+**⚠ BU GÜNDEM 2026-08-15'TE BAŞTAN YAZILDI.** Eski sıralama ("hangi filtreyi ekleyelim")
+geçersiz: `skor_gucu.py` (964k kayıt) + B6 (canlı sicil, rho≈0) skorun yön bilgisi
+taşımadığını **iki bağımsız yöntemle** gösterdi, B1'de son filtre adayı (F&G) da düştü.
+
+**K2 GÜNÜ — GERÇEK SIRALAMA:**
+1. 🔴 **Sıkışma skoru korunacak mı?** Diğer her şey buna bağlı. "Hayır" ise aşağıdaki
+   sekiz madde tek kararla kapanır: skor tabanı 70→75 · L/S bileşeni · korelasyon
+   histerezisi · OYNAK'ta-LONG-yok · trend filtresi · funding+trend kombosu ·
+   likidasyonun skora katkısı · skor ağırlıkları validasyonu.
+2. ⭐ **Makro kapısı DIKKAT'te kapansın mı?** (§9.8-B4) İki bağımsız sicil aynı yönü
+   gösteriyor: DIKKAT'te −20,01R / 40 işlem, ACIK'ta +19,96R / 128 işlem. Mekanizma
+   ZATEN sistemde var — yeni parametre değil, mevcut kapının sertleştirilmesi.
+   ⚠ Veriden türetildi + n=40 → ön-kayıtlı doğrulama şart.
+3. **Eşik dejenerasyonu fallback'i** — tespit edildi, uygulanmadı (BNB'nin SHORT kolu ölü,
+   6 sembolde funding tavanına yapışma). Konfig etiketiyle birlikte.
+4. **"SHORT çalışmıyor" maddesini sicil bazında yeniden kur** (eski hali iki sicili
+   topluyordu — §11'deki düzeltmeye bak).
+5. **Meta karar: sistem tahmin üretmeye devam etsin mi?** Etmezse veri toplama sürer
+   (likidasyon doğrulaması buna bağlı).
+❌ **F&G kapısı** — 2026-08-15'te beş şartlı sınavda DÜŞTÜ (§9.8-B1). Tekrar açma.
 
 ❌ **DÜŞENLER (tekrar açma):** seviye penceresi, mutlak funding tabanı, basis (iki kez),
 geniş-stop/zaman-aşımı çıkışı.
