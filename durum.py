@@ -83,7 +83,20 @@ def main():
     # degismedi; dejenere esikli sembolde skorun ilgili kolu koru olabilir.
     esik = _j("esikler.json")
     if esik:
-        uyarili = [(s, d["saglik_uyari"]) for s, d in (esik.get("symbols") or {}).items()
+        S = esik.get("symbols") or {}
+        # 2026-08-15: kalibrasyon patlayinca sistem SESSIZCE varsayilan esiklere
+        # dusuyordu. Artik gorunur (bkz. kalibrasyon.write_config).
+        bozuk = [s for s, d in S.items() if isinstance(d, dict) and "error" in d]
+        bayat = [(s, d.get("bayat_since")) for s, d in S.items()
+                 if isinstance(d, dict) and d.get("bayat_since")]
+        if bozuk:
+            print(f"\n!! ESIK YOK ({len(bozuk)} sembol) — VARSAYILAN esiklerle skorlaniyor: "
+                  + ", ".join(bozuk))
+        if bayat:
+            print(f"\n!! ESIK BAYAT ({len(bayat)} sembol) — son basarili kalibrasyon korunuyor:")
+            for s, t in bayat:
+                print(f"  {s}: {t} tarihinden beri tazelenemedi")
+        uyarili = [(s, d["saglik_uyari"]) for s, d in S.items()
                    if isinstance(d, dict) and d.get("saglik_uyari")]
         if uyarili:
             print(f"\nESIK SAGLIK UYARISI ({len(uyarili)} sembol — skor ayrim gucu dusuk):")

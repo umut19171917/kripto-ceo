@@ -27,7 +27,13 @@ HAFIZA = Path(r"C:\Users\KURTİ\.claude\projects\c--Users-KURT--Desktop-klas-rle
 TUTMA_GUN = 14
 
 # Yedeklenecek KRITIK dosyalar (gitignore'lu; yeri doldurulamaz veya yeniden-almasi zahmetli)
-DOSYALAR = ["kripto-defter.json", "radar-defter.json", "telegram.json", "coinalyze.json"]
+# 2026-08-15 EKLENDI — kalibrasyon durumu. Gerekce: "kod yeniden uretir" diye
+# calisma-ani sayilmislardi, ama uretim AGA BAGLI. 08-15'te DNS kesintisi
+# esikler.json'daki 11 sembolun 11'ini birden sildi ve geri alacak kopya YOKTU
+# (14 yedegin hicbirinde bu dosya yok). Kayip SESSIZ: sistem varsayilan esiklere
+# duser, hicbir yerde yazmaz. Ikisi de kucuk (~2KB), maliyeti sifir.
+DOSYALAR = ["kripto-defter.json", "radar-defter.json", "telegram.json", "coinalyze.json",
+            "esikler.json", "likidasyon-esik.json"]
 
 
 def _prune():

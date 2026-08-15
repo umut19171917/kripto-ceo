@@ -140,14 +140,48 @@ def saglik_kontrol(th):
 
 
 def write_config(path=None):
-    """Tum SYMBOLS icin esikleri hesapla ve esikler.json'a yaz."""
+    """Tum SYMBOLS icin esikleri hesapla ve esikler.json'a yaz.
+
+    DAYANIKLILIK (2026-08-15 — canli arizadan sonra):
+    Eskiden her kosu dosyayi SIFIRDAN kurardi. Bir sembolun hesabi patlarsa
+    (gecici DNS/ag kesintisi yeter) o sembolun CALISAN kalibrasyonu
+    {"error": ...} ile EZILIYORDU. olcucu.get_thresholds() bu kaydi gorunce
+    sessizce DEFAULT_TH'ye duser -> sistem JENERIK esiklerle skorlamaya devam
+    eder ve hicbir yerde yazmaz.
+    2026-08-15 11:46'da tam bu oldu: 11 sembolun 11'i birden silindi, hicbir
+    uyari cikmadi, K2 olcumu jenerik esiklerle devam etti.
+
+    Yeni davranis:
+      - hesap patlarsa ONCEKI IYI DEGER KORUNUR (+ bayat_since / son_hata damgasi)
+      - gercekten hic degeri yoksa error kaydi yazilir
+      - ust seviyeye 'bayat' listesi konur (durum.py + gunluk ozet gorur)
+    Basarili kosuda compute_thresholds temiz dict dondurdugu icin damga
+    kendiliginden silinir."""
     path = Path(path) if path else ESIK_FILE
-    out = {"updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "symbols": {}}
+    try:
+        eski = (json.loads(path.read_text(encoding="utf-8")) or {}).get("symbols") or {}
+    except Exception:
+        eski = {}
+
+    simdi = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    out = {"updated_at": simdi, "symbols": {}}
+    bayat = []
     for sym in olcucu.SYMBOLS:
         try:
             out["symbols"][sym] = compute_thresholds(sym)
         except Exception as e:
-            out["symbols"][sym] = {"error": f"{type(e).__name__}: {e}"}
+            hata = f"{type(e).__name__}: {e}"
+            onceki = eski.get(sym)
+            if isinstance(onceki, dict) and onceki.get("neutral") is not None:
+                kayit = dict(onceki)                       # SON IYI DEGERI KORU
+                kayit["bayat_since"] = onceki.get("bayat_since") or simdi
+                kayit["son_hata"] = hata
+                out["symbols"][sym] = kayit
+            else:
+                out["symbols"][sym] = {"error": hata}      # hic iyi deger yok
+            bayat.append(sym)
+    if bayat:
+        out["bayat"] = bayat
     olcucu.atomik_yaz(path, out)
     return out
 
