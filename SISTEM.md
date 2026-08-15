@@ -331,6 +331,68 @@ kötüleşiyor, (b) ince coinlerde delist yanlılığı ve spread en yüksek (sp
 
 ---
 
+### 9.6 NAKİT-TAŞIMA / CARRY (2026-08-15) — ilk POZİTİF sonuç, ama yetersiz
+**Neden bu aile:** §9.7'deki harita gösterdi ki ölçülen 13 adayın hepsi tek aileden —
+**tahmin**. `carry_testi.py` başka bir aileyi ölçer: spot'tan al + perp'ten sat, birim
+bazında tam delta-nötr, getiri fiyattan değil **funding ödemesinden** gelir. Tahmin yok.
+
+İroni kayda değer: funding'in yapısal tek yönlülüğünü aylardır görüyorduk (sistem 5:1 SHORT
+üretiyor çünkü funding çoğunlukla pozitif) ve onu *tahmin sinyali* sanıp kullanmaya çalıştık.
+Oysa o bir gelir akışı.
+
+30 coin (spot+perp kesişimi, pencere başındaki hacme göre), 540 gün, gerçek iki ayrı tarife
+(spot taker %0,095 — perp'ten PAHALI), sermaye = spot notional × 1,5 (perp marjı dahil):
+
+| Strateji | Brüt | Maliyet | Net | **Sermayeye göre yıllık** |
+|---|---|---|---|---|
+| A) Hep-açık, eşit ağırlık | +1,12% | −0,32% | +0,80% | **+0,40%** |
+| B) Seçici (önceki 30g funding>0) | +2,91% | −0,32% | +2,59% | **+1,37%** |
+| C) Kesitsel ilk 10 (haftalık) | +4,17% | −3,62% | +0,56% | +0,29% |
+
+En iyi coinler CRV +2,83% · LINK +2,54% · BTC +2,34% (yıllık). En kötü ENA −3,82% ·
+TRUMP −3,50% (bu coinlerde funding çoğunlukla NEGATİF — kısa taraf ödeyen taraf olur).
+
+**AYNI PENCEREDE BAĞLAM (belirleyici):** BTC al-tut **−34,5%** (yıllık −24,9%), 293 coinin
+**medyanı −81,7%**, yalnız 10'u pozitif. Yani carry, her şeyin çöktüğü 18 ayda **pozitif
+kalan ilk şey** — ve en kötü çekilmesi **−0,78%**.
+
+**HÜKÜM: tasarlandığı gibi çalışıyor, ama getiri yetersiz.**
+- ✅ Delta-nötr vaadini tuttu: −82% medyan piyasada +0,4…+1,4%, çekilme %1'in altında.
+- ❌ Büyüklük risksiz faizin ALTINDA. Borsa riski (FTX dersi) ve perp bacağı likidasyon
+  riski **modellenmedi** — %1,4 için bu riskler alınmaz.
+- ❌ Rejim ayrımı getiri profilini bitiriyor: BOĞA'da funding +2,65%/yıl, AYI'da −0,08%.
+  **En çok boğada ödüyor — yani sadece long olmanın çok daha fazla ödediği anda.**
+- C'de devir maliyeti brütün %87'sini yiyor → sık dengeleme carry'yi öldürür.
+
+⚠ Kaldıraçla büyütülebilir görünüyor (çekilme küçük) — **ama kaldıraç, modellenmemiş iki
+riski çarpar.** Kripto tarihinde bu tam olarak insanların patladığı yerdir. Kaldıraçlı carry
+K3 öncesi gündeme ALINMAZ.
+
+### 9.7 HARİTA — nerede aradık, nerede aranmadı (2026-08-15)
+**Yapısal teşhis:** ölçülen 13 adayın hepsi *"fiyat bundan sonra ne yapacak?"* diye soruyordu.
+Sinyali 13 kez değiştirdik, **oyunu hiç değiştirmedik.** Tahmin, hız/veri/sermaye
+üstünlüğümüzün olmadığı en kalabalık masa — ve maliyet orada en çok ısırır.
+
+| Aile | Durum |
+|---|---|
+| **Tahmin** (skor, funding, basis×2, seviye, geniş stop, trend, rejim, fade×2, kesitsel, coin sınıfı, F&G) | ❌ 13 aday, canlı doğrulanmış 0 |
+| **Carry** (nakit-taşıma) | ⚠ Çalışıyor ama +0,4…1,4%/yıl — risksiz faizin altında (§9.6) |
+| **Zorunlu akış** (likidasyon) | ⏳ Tek hayatta kalan aday; ~Aralık'ta ileriye dönük doğrulama |
+| **Takvim/zorunlu arz** (unlock, funding saati, vade) | 🔲 Test edilmedi — funding saati bedava ölçülebilir |
+| **Market making / borsalar arası arbitraj** | ⛔ Hız + altyapı + çoklu-borsa sermayesi yok |
+| **Opsiyon / varyans primi** | ⛔ Veri yok (Deribit), ayrı beceri, kuyruk riski |
+
+**Sistemi kapatan veri eksikleri** (her biri bir aileyi kapatıyor): spot verisi yoktu →
+§9.6'da açıldı · emir defteri/spread YOK → icra gerçekçiliği ölçülemiyor · unlock takvimi
+YOK (DefiLlama ücretli) · opsiyon YOK · likidasyon 2-4dk gecikmeli · icra ELLE
+(eşzamanlı pozisyon sayısını sınırlar).
+
+**Katman katman sistem:** veri toplama ✅ · sıkışma skoru ❌ ölü · plan üretimi ⚠ başabaş-negatif
+· risk kapıları ❓ ölçülmedi · sicil/muhasebe ✅ · ölçüm araçları ✅ · teslimat ✅.
+**Ölü kısım kodun ~%20'si; kalan %80 hangi fikirle çalışılırsa çalışılsın yeniden kullanılabilir.**
+
+---
+
 ## 10. KARAR KAPILARI (disiplinin kalbi)
 
 - **K1 (config onayı) — TAMAM.** Walk-forward config seçimi; canlı parametre değiştirilmedi.
@@ -341,15 +403,26 @@ kötüleşiyor, (b) ince coinlerde delist yanlılığı ve spread en yüksek (sp
 
 ---
 
-## 11. ANLIK DURUM (2026-07-27 — eskir)
+## 11. ANLIK DURUM (2026-08-15 — eskir)
 
-- **Ana sicil K2 sayacı: ~13/30** girilmiş-kapanmış swing (tempo ~5/hafta → ~3 hafta kaldı).
-- Ana sicil toplam: 43 kapalı, %33 isabet, brüt +2.98R / **net −12.64R**. 4 açık.
-- Radar sicili: 26 kapalı, %25 isabet, net −7.37R.
-- Deneysel (LAB): 1 kapalı, net +0.86R.
-- Rejim: SAKIN (korelasyon 0.84-0.85, eşik dibinde salınıyor). Makro kapı: ACIK.
-- Açık risk: LONG %2.0 / SHORT %2.0 → **her iki yönde tavan dolu**, yeni tahmin açılmıyor.
-- **Hüküm:** kanıtlanmış edge YOK; her iki sicil negatif; disiplin = veri biriktir, K2'yi bekle.
+Sayılar **kanonik evrenden**: geri-doldurma ve deneysel kayıtlar HARİÇ (`defter.ozet()` ile
+aynı süzgeç). ⚠ Bu süzgeci atlayan sayımlar sicili ~2 katına şişirir — 2026-08-15'te bir kez
+yapıldı ve düzeltildi.
+
+- **K2 sayacı: 28/30** (2 kaldı) — 6 kazanç / 22 kayıp, net **−10,85R**.
+- Ana sicil: 134 kayıt, 58 kapalı. **SHORT 47 işlem %34 isabet net +2,09R** ·
+  **LONG 11 işlem %27 net −1,79R**. Açık: 2 (ZEC LONG, LINK SHORT).
+- Radar sicili: 236 kayıt, 110 kapalı. **SHORT 42 işlem %21 net −15,52R** ·
+  **LONG 68 işlem %40 net +15,17R** — ana sicilin TAM TERSİ örüntü (farklı sinyal).
+- **Yön asimetrisi hafifledi:** üretim toplamda SHORT 112 / LONG 22 = **5,1:1**, ama
+  2026-08-09 sonrası **1,5:1** (9/6). Yine de BTC, ETH, SOL, XRP, DOGE hâlâ **hiç LONG
+  üretmedi**. Mekanizma: 134 kaydın 112'si `long_squeeze` setup'ı.
+- **⚠ "SHORT tarafı çalışmıyor" maddesi (§12 0b) ÇÜRÜK TEMELE DAYANIYOR:** o iddia iki sicili
+  BİRLEŞTİRİP hesaplanmıştı — §9.5'teki coin-sınıfı hatasının aynısı (farklı sinyalli iki
+  sicili toplamak). Ayrı bakıldığında ana sicilde SHORT **pozitif** (+2,09R), radarda LONG
+  pozitif. K2'de bu madde bu haliyle işleme alınmaz, yeniden kurulur.
+- **Hüküm:** kanıtlanmış edge YOK. Ölçülen aile haritası için §9.7; tek pozitif sonuç
+  carry (§9.6) ve o da risksiz faizin altında.
 
 ---
 
