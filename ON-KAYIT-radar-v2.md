@@ -124,3 +124,32 @@ dönük doğrulamayı geçme olasılığı düşüktür. Bu kayıt, o ihtimali *
 `onkayit_radar.py` — kayıt anını okur, kuralı uygular, 5 şartı sırayla değerlendirir.
 Ara koşularda yalnız **sayaç** gösterir (n/30); 30'a ulaşmadan hüküm basmaz — erken
 bakıp karar vermeyi engellemek için.
+
+---
+
+## EK — 2026-08-18, kayıttan ~30 dk sonra (KURAL VE KILL ŞARTLARI DEĞİŞMEDİ)
+
+> ⚠ **Bu ek YALNIZCA §1'deki KANIT değerlendirmesini zayıflatır.** Kural (§2), örneklem
+> (§3) ve kill şartları (§4) **hiç dokunulmadan** durmaktadır ve dokunulmayacaktır.
+> Ön kaydı güçlendirmek için değil, **zayıflığını kayda geçirmek** için yazıldı.
+
+Kullanıcının "bu yöntem analize eklendi mi?" sorusu üzerine hücrelerin bağımsızlığı
+kontrol edildi ve iki zayıflık bulundu:
+
+1. **İki eleme bağımsız değil.** `radar/DİKKAT` (n=23) ile `radar/SHORT` (n=43)
+   **13 işlemi paylaşıyor** — DİKKAT'in %57'si aynı zamanda SHORT. Yani "iki bağımsız
+   kanıtlanmış kaybeden" ifadesi fazla iyimserdi; kısmen tek bulgunun iki adı.
+
+2. **DİKKAT elemesinin artımlı katkısı ince.** SHORT elendikten sonra kalan `radar/LONG`
+   n=70, +0,175R, PSR %84. DİKKAT elemesi bunun üzerine yalnız **10 işlem** çıkarıyor
+   (ort. −0,653R) ve hücreyi +0,313R / PSR %95'e taşıyor. **Manşet rakamı 10 işleme
+   dayanıyor.**
+
+**Etkisi:** §1'deki "kanıt değil, ön kayıt adayı" hükmü **daha da güçlenir**; öncül
+tahminim (kural düşer) değişmez, hatta pekişir. Testin değeri aynen sürer — çünkü
+testin amacı bu zayıf kanıtı ileriye dönük olarak sınamaktı, güçlü olduğunu iddia etmek
+değil.
+
+**Yöntemsel not:** en kötü alt kümeleri çıkarmak, kalanın ortalamasını **her zaman**
+yükseltir — bu aritmetiktir, keşif değil. Bu yüzden örneklem-içi +0,313R hiçbir şeyin
+kanıtı sayılmaz; yalnız 30 işlemlik ileriye dönük sonuç sayılır.

@@ -498,6 +498,41 @@ kapısı istatistiksel sınavı geçemedi. Bu, ikinci dış belgenin haklı oldu
 **çoklu-karşılaştırma düzeltmesi (SPA / Reality Check) hiç uygulanmamıştı; uygulanınca
 elde kalan bulgu kalmadı.**
 
+### 9.10 YÖNTEM ADAYI (2026-08-18) — "kazananı arama, kanıtlanmış kaybedeni ele"
+**Bu bir bulgu değil, bir ARAMA YÖNTEMİ önerisidir ve kendisi de sınanmaktadır.**
+
+**Gözlem:** 14 aday "pozitif kenar" aradı, 0'ı bulundu. Ama istatistiksel sınav
+**üç hücrede kanıtlanmış NEGATİF** buldu (bootstrap %95 GA sıfırı dışlıyor):
+K2 −0,539R · radar/DİKKAT −0,673R · radar/SHORT −0,441R. **Kanıtlanmış pozitif hücre yok.**
+
+Asimetri: sistem *kaybettireni* güvenilir tespit ediyor, *kazandıranı* hiç edemiyor.
+Önerilen duruş: kazananı aramak yerine **kanıtlanmış kaybeden koşulları elemek.**
+
+**Lehine olan:** eleme bir risk-azaltma duruşudur, kenar iddiası değildir; ve bu projede
+kaybedenin yapısal sebebi ÖLÇÜLMÜŞTÜR (funding yapısal pozitif → SHORT eğilimi → BTC
+sürüklenmesine karşı kayıp).
+
+**⚠ ALEYHİNE OLANLAR — yöntemi kabul etmeden önce okunacak:**
+
+1. **Aritmetik tuzak (en önemlisi).** En kötü alt kümeleri çıkarmak, kalan örneklemin
+   ortalamasını **her zaman** yükseltir. Bu keşif değil, **aritmetiktir.** Örneklem-içi
+   iyileşme hiçbir şeyin kanıtı değildir.
+2. **Aynı çoklu-karşılaştırma riski.** Negatif hücreler, daha önce sahte pozitif üreten
+   TARAMANIN AYNISI ile bulundu. ~20 hipotezde %95 GA ile ~1 hücrenin şans eseri sıfırı
+   dışlaması beklenir.
+3. **Hücreler bağımsız değil.** radar/DİKKAT ∩ radar/SHORT = **13 işlem** (DİKKAT'in %57'si).
+   "İki bağımsız eleme" değil, kısmen tek bulgunun iki adı.
+4. **Artımlı katkı ince.** LONG içinden DİKKAT elemesi yalnız **10 işlem** çıkarıyor
+   (ort. −0,653R) — ve PSR'yi %84 → %95'e taşıyan tam olarak bu 10 işlem.
+5. **Eleme kenar YARATMAZ, kaybı azaltır.** −0,337R'den −0,060R'ye gitmek sıfıra
+   yaklaşmaktır, kâra değil. Kalanın gerçekten pozitif olması ayrıca kanıtlanmalıdır
+   ve kanıtlanmamıştır (radar/ACIK+LONG'un GA'sı sıfırı hâlâ içeriyor).
+
+**Durum: SINANIYOR.** `ON-KAYIT-radar-v2.md` yalnız bir kuralı değil, **bu yöntemi**
+test eder. Eleme yaklaşımı ileriye dönük doğrulamayı geçerse yöntem meşrulaşır;
+geçmezse yöntem de düşer. **O güne kadar yöntem olarak KULLANILMAZ** — tek uygulaması
+ön kayıtlı testtir.
+
 ---
 
 ## 10. KARAR KAPILARI (disiplinin kalbi)
