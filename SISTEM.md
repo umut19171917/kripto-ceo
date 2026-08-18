@@ -451,6 +451,53 @@ doğrulaması** — iki ayrı yöntem, aynı sonuç.
 İsabet %33, başabaş ~%32,5 → **sistem tam başabaş noktasında salınıyor.** Kâr da etmiyor,
 çökmüyor da; sonuçların ay-ay savrulması (Haz +9,4R · Tem −11,4R · Ağu +2,3R) bununla tutarlı.
 
+### 9.9 İSTATİSTİKSEL SINAV (2026-08-18) — K2 hükmü sertleşti, makro bulgusu DÜŞTÜ
+İki dış denetim belgesi de "risk-düzeltilmiş ölçüm yok" dedi ve haklıydılar. `metrikler.py`
+kuruldu: equity eğrisi, Sharpe/Sortino/Calmar/maks çekilme, **PSR**, **bootstrap GA**,
+**etiket permütasyonu**. Bağımlılık yok (saf Python).
+
+**⚠ Dış belgenin önerdiği test yanlış kurulmuştu.** *"İşlemlerin SIRASINI karıştır, p<0,05
+ise gerçek edge"* — sıra permütasyonu **toplamı değiştirmez**, ortalama R ona karşı
+değişmezdir; o test edge'i ölçemez. Doğru araçlar kullanıldı: ortalama için **bootstrap**,
+Sharpe için **PSR**, grup farkı için **etiket permütasyonu**.
+
+| Küme | n | işlem başına | PSR (Sharpe>0) | Bootstrap %95 GA | Hüküm |
+|---|---|---|---|---|---|
+| **K2 (swing-1h)** | 32 | **−0,539R** | **%3,1** | **[−0,903 , −0,109]** | **sıfır DIŞINDA → sistematik** |
+| Ana sicil (tümü) | 62 | −0,337R | %6,0 | [−0,718 , +0,057] | kararsız |
+| Radar | 113 | −0,060R | %33,2 | [−0,319 , +0,205] | kararsız |
+
+**K2 hükmü artık istatistiksel olarak sağlam.** Daha önce binom yaklaşımıyla "şanssızlık
+olabilir (p≈%10)" demiştim; net-R üzerinden bootstrap sıfırı **dışlıyor** ve PSR %3,1.
+Büyüklüğü de kullanan test, yalnız isabet sayan testten güçlüdür. Aykırı değer: en iyi ve
+en kötü 5 işlem çıkarılınca gövde **−0,983R/işlem** — yani sonuç birkaç kötü işlemden değil.
+
+**🔴 MAKRO KAPISI BULGUSU DÜŞTÜ (§9.8-B4 ve §12 madde 2 geçersiz).**
+Bulgu VERİDEN türetilmişti ve şans olasılığı hiç ölçülmemişti. Etiket permütasyonu
+(20.000 tekrar) ilk kez ölçtü:
+
+| Sicil | ACIK | DIKKAT | fark | **p** |
+|---|---|---|---|---|
+| Ana | −0,288R (n=45) | −0,468R (n=17) | +0,180 | **0,695** ❌ |
+| Radar | +0,097R (n=90) | −0,673R (n=23) | +0,770 | **0,021** ✅ |
+| **Fisher birleşik** | | | | **0,073** ❌ |
+
+Brüt R ile de aynı (Ana p=0,398 · Radar p=0,023) → muhasebe farkı değil.
+
+**Neden düştü:** (a) ana sicilde fark hiçbir zaman anlamlı olmadı ve veri artınca **küçüldü**
+(brüt fark 0,467 → 0,366); (b) tek anlamlı sonuç radar'da ve **~16 kırılım** incelendi
+(rejim, makro, korelasyon, vol, yön, çıkış, skor, ay × 2 sicil) — bu sayıda testte p≈0,02
+şans eseri yaklaşık bir kez beklenir. Bonferroni eşiği 0,05/16 ≈ 0,003.
+
+⚠ **Kendi hatam:** 2026-08-17'de "bulgu zamanla güçleniyor" demiştim. Kümülatif görünüm
+öyleydi ama doğru test uygulanmamıştı; gürültülü bir serinin kümülatif görüntüsüne
+bakmışım. Düzeltildi.
+
+**SONUÇ: hayatta kalan bulgu SIFIR.** Tahmin ailesi 14/14 düştü, carry yetersiz, makro
+kapısı istatistiksel sınavı geçemedi. Bu, ikinci dış belgenin haklı olduğu noktadır —
+**çoklu-karşılaştırma düzeltmesi (SPA / Reality Check) hiç uygulanmamıştı; uygulanınca
+elde kalan bulgu kalmadı.**
+
 ---
 
 ## 10. KARAR KAPILARI (disiplinin kalbi)
@@ -497,10 +544,10 @@ taşımadığını **iki bağımsız yöntemle** gösterdi, B1'de son filtre ada
    sekiz madde tek kararla kapanır: skor tabanı 70→75 · L/S bileşeni · korelasyon
    histerezisi · OYNAK'ta-LONG-yok · trend filtresi · funding+trend kombosu ·
    likidasyonun skora katkısı · skor ağırlıkları validasyonu.
-2. ⭐ **Makro kapısı DIKKAT'te kapansın mı?** (§9.8-B4) İki bağımsız sicil aynı yönü
-   gösteriyor: DIKKAT'te −20,01R / 40 işlem, ACIK'ta +19,96R / 128 işlem. Mekanizma
-   ZATEN sistemde var — yeni parametre değil, mevcut kapının sertleştirilmesi.
-   ⚠ Veriden türetildi + n=40 → ön-kayıtlı doğrulama şart.
+2. ❌ **Makro kapısı DIKKAT'te kapansın mı? — DÜŞTÜ (2026-08-18, §9.9).** Etiket
+   permütasyonu: ana sicil p=0,695 · radar p=0,021 · Fisher birleşik p=0,073.
+   ~16 kırılım incelendiğinden tek anlamlı sonuç çoklu-karşılaştırmayla açıklanabilir.
+   Gündemden düştü; tekrar açma. **Hayatta kalan bulgu artık SIFIR.**
 3. **Eşik dejenerasyonu fallback'i** — tespit edildi, uygulanmadı (BNB'nin SHORT kolu ölü,
    6 sembolde funding tavanına yapışma). Konfig etiketiyle birlikte.
 4. **"SHORT çalışmıyor" maddesini sicil bazında yeniden kur** (eski hali iki sicili
