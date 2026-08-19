@@ -4,7 +4,7 @@
 > (Faz-0 doğum belgesi, LLM-merkezli eski tasarım) DEĞİL — bu, kodda fiilen çalışan
 > sistemin skilli. Anlık sayılar (sicil, K2 sayacı, rejim) zamanla eskir; mimari ve
 > disiplin kalıcıdır.
-> **Anlık görüntü tarihi:** 2026-07-23.
+> **Anlık görüntü tarihi:** 2026-08-19 (§11 anlık durum; §9 bulgular kalıcı).
 > **Proje yolu:** `c:\Users\KURTİ\Desktop\klasörler\kripto`
 
 ---
@@ -545,26 +545,39 @@ geçmezse yöntem de düşer. **O güne kadar yöntem olarak KULLANILMAZ** — t
 
 ---
 
-## 11. ANLIK DURUM (2026-08-15 — eskir)
+## 11. ANLIK DURUM (2026-08-19 — eskir)
 
 Sayılar **kanonik evrenden**: geri-doldurma ve deneysel kayıtlar HARİÇ (`defter.ozet()` ile
 aynı süzgeç). ⚠ Bu süzgeci atlayan sayımlar sicili ~2 katına şişirir — 2026-08-15'te bir kez
 yapıldı ve düzeltildi.
 
-- **K2 sayacı: 28/30** (2 kaldı) — 6 kazanç / 22 kayıp, net **−10,85R**.
-- Ana sicil: 134 kayıt, 58 kapalı. **SHORT 47 işlem %34 isabet net +2,09R** ·
-  **LONG 11 işlem %27 net −1,79R**. Açık: 2 (ZEC LONG, LINK SHORT).
-- Radar sicili: 236 kayıt, 110 kapalı. **SHORT 42 işlem %21 net −15,52R** ·
-  **LONG 68 işlem %40 net +15,17R** — ana sicilin TAM TERSİ örüntü (farklı sinyal).
-- **Yön asimetrisi hafifledi:** üretim toplamda SHORT 112 / LONG 22 = **5,1:1**, ama
-  2026-08-09 sonrası **1,5:1** (9/6). Yine de BTC, ETH, SOL, XRP, DOGE hâlâ **hiç LONG
-  üretmedi**. Mekanizma: 134 kaydın 112'si `long_squeeze` setup'ı.
-- **⚠ "SHORT tarafı çalışmıyor" maddesi (§12 0b) ÇÜRÜK TEMELE DAYANIYOR:** o iddia iki sicili
-  BİRLEŞTİRİP hesaplanmıştı — §9.5'teki coin-sınıfı hatasının aynısı (farklı sinyalli iki
-  sicili toplamak). Ayrı bakıldığında ana sicilde SHORT **pozitif** (+2,09R), radarda LONG
-  pozitif. K2'de bu madde bu haliyle işleme alınmaz, yeniden kurulur.
-- **Hüküm:** kanıtlanmış edge YOK. Ölçülen aile haritası için §9.7; tek pozitif sonuç
-  carry (§9.6) ve o da risksiz faizin altında.
+**K2 KAPANDI ve GEÇİLEMEDİ.** 33 işlem · 7 kazanç / 26 kayıp · isabet **%21,2** ·
+net **−15,19R** (−0,460R/işlem). Bootstrap %95 GA **[−0,839, −0,028] sıfırı DIŞLIYOR**,
+PSR %4,7 → kayıp **sistematik, şanssızlık değil**. Başabaş için gereken isabet %32,5.
+
+| Sicil | Kayıt | Kapalı | İsabet | Net | İşlem başına | Bootstrap GA | PSR |
+|---|---|---|---|---|---|---|---|
+| Ana | 146 | 63 | %31,7 | −18,84R | −0,299R | [−0,680, +0,094] içeriyor | %8,2 |
+| Radar | 266 | 120 | %32,5 | −7,92R | −0,066R | [−0,313, +0,186] içeriyor | %30,8 |
+
+Açık/bekleyen: ana 3, radar 11.
+
+**Hayatta kalan bulgu SIFIR.** 14 tahmin adayı düştü; son aday (makro kapısı) 2026-08-18'de
+etiket permütasyonuyla düştü (§9.9). Carry ölçüldü ama risksiz faizin altında (§9.6).
+
+**AÇIK ÖN KAYIT — `radar-v2`** (`ON-KAYIT-radar-v2.md`, kayıt anı 2026-08-18T20:14:04Z,
+commit `a3f949e`). Kural: kayıttan sonra oluşan radar tahminleri, `LONG` **ve** `ACIK`.
+Hedef 30 kapanmış işlem. **Durum: 0/30, 21 saat.** Sebep: FOMC penceresi boyunca makro kapı
+DİKKAT'te kaldı; üretilen 7 tahminin 7'si de DİKKAT damgalı. **Test durmadı, sıra bekliyor**
+— kapı ACIK'a dönünce sayaç işler. ⚠ ~19 günlük tahmin bir TABAN'dır, takvim değil: makro
+pencereler kümelenir. Ölçüm `onkayit_radar.py` (30'a kadar hüküm basmaz).
+
+**BEKLEYEN KARAR (kullanıcıda):** K2 geçilemedi, sistem tahmin üretmeye devam etsin mi?
+(A) aynen devam · (C) tahmin üretimi dursun/veri aksın · (D) tamamen durdur.
+(B — makro sertleştirme — §9.9 ile düştü, artık geçersiz.)
+
+**Sistem sağlığı:** izleyici + radar çalışıyor · eşikler 11/11 sağlam (0 hatalı, 0 bayat —
+15 Ağustos düzeltmesi tutuyor) · makro DİKKAT (FOMC) · rejim SAKIN.
 
 ---
 
