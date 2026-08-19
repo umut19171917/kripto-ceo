@@ -57,6 +57,41 @@ def uygun_islemler():
     return out
 
 
+def _neden_ilerlemiyor():
+    """TESHIS — sayac neden ilerlemiyor? Kurala DOKUNMAZ, yalniz gorunurluk.
+    (2026-08-19 eklendi: sayac 21 saat 0'da kaldi, sebebi FOMC penceresiymis.)"""
+    import json
+    from collections import Counter
+    t0 = _ts(KAYIT_ANI)
+    try:
+        d = json.loads((KOK / "radar-defter.json").read_text(encoding="utf-8"))["tahminler"]
+    except Exception:
+        return
+    yeni = [t for t in d
+            if t.get("kaynak", "canli") != "geri-doldurma" and t.get("sicil") != "deneysel"
+            and (_ts(t.get("tarih")) or t0) >= t0]
+    if not yeni:
+        print("  teshis: kayittan beri HIC radar tahmini uretilmemis")
+        return
+    yon = Counter(t.get("yon") for t in yeni)
+    mk = Counter(t.get("makro_kapi") for t in yeni)
+    ac_lo = [t for t in yeni if t.get("yon") == "LONG" and t.get("makro_kapi") == "ACIK"]
+    acik_bek = sum(1 for t in ac_lo if t.get("durum") not in M.KAPALI)
+    print(f"\n  teshis: kayittan beri {len(yeni)} radar tahmini uretildi")
+    print(f"    yon    : LONG {yon.get('LONG', 0)} / SHORT {yon.get('SHORT', 0)}")
+    print(f"    makro  : " + " / ".join(f"{k} {v}" for k, v in mk.most_common()))
+    print(f"    kurala uyan (LONG+ACIK): {len(ac_lo)}  ({acik_bek} tanesi henuz acik)")
+    try:
+        m = json.loads((KOK / "makro.json").read_text(encoding="utf-8"))
+        print(f"    su anki kapi: {m.get('kapi')}"
+              + (f"  <- {m['notlar'][0]}" if m.get("notlar") else ""))
+        if m.get("kapi") != "ACIK":
+            print("    => kapi ACIK'a donene kadar sayac ilerlemez. Bu BEKLENEN davranistir;")
+            print("       kural kapiyi sart kosuyor. Test durmadi, SIRA BEKLIYOR.")
+    except Exception:
+        pass
+
+
 def degerlendir(kap):
     r = [M.net_r(t) for t in kap]
     n = len(r)
@@ -93,19 +128,21 @@ def main():
         pass
     kap = uygun_islemler()
     n = len(kap)
-    gecen = (datetime.now(timezone.utc) - _ts(KAYIT_ANI)).days
+    saat = (datetime.now(timezone.utc) - _ts(KAYIT_ANI)).total_seconds() / 3600
+    gecen = saat / 24
 
     print("=" * 78)
     print("  ON-KAYITLI TEST — radar-v2 (ACIK + LONG)")
-    print(f"  kayit ani: {KAYIT_ANI} | {gecen} gun gecti")
+    print(f"  kayit ani: {KAYIT_ANI} | {saat:.0f} saat ({gecen:.1f} gun) gecti")
     print(f"  kural ve kill sartlari: ON-KAYIT-radar-v2.md (dondurulmus)")
     print("=" * 78)
 
     if n < HEDEF_N:
         kalan = HEDEF_N - n
         hiz = (n / gecen) if gecen > 0 else 0
-        tahmin = f"~{kalan/hiz:.0f} gun" if hiz > 0 else "—"
+        tahmin = f"~{kalan/hiz:.0f} gun" if hiz > 0 else "hesaplanamiyor (henuz uygun islem yok)"
         print(f"\n  SAYAC: {n}/{HEDEF_N}   ({kalan} islem kaldi, tahmini {tahmin})")
+        _neden_ilerlemiyor()
         print(f"\n  ⚠ HUKUM BASILMIYOR. {HEDEF_N} isleme ulasilmadan ara sonuca bakmak")
         print("    on-kayitli testin degerini yok eder (F&G ve kesitsel momentum")
         print("    tam olarak bu esneklikle ayakta kalmisti).")
