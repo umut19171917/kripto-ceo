@@ -153,3 +153,37 @@ değil.
 **Yöntemsel not:** en kötü alt kümeleri çıkarmak, kalanın ortalamasını **her zaman**
 yükseltir — bu aritmetiktir, keşif değil. Bu yüzden örneklem-içi +0,313R hiçbir şeyin
 kanıtı sayılmaz; yalnız 30 işlemlik ileriye dönük sonuç sayılır.
+
+---
+
+## EK 2 — 2026-08-20: REJİM DEĞİŞTİ (KURAL VE KILL ŞARTLARI YİNE DEĞİŞMEDİ)
+
+> ⚠ **Bu ek de yalnızca YORUM uyarısıdır.** Kural (§2), örneklem (§3) ve kill şartları (§4)
+> dokunulmadan duruyor. **Sonuç görülmeden yazıldı** — bilerek, çünkü sonradan yazılsaydı
+> her iki yönde de bahane olarak kullanılabilirdi.
+
+**Olay:** Kayıttan ~1,5 gün sonra piyasa sert şekilde yukarı döndü.
+Ölçüm (2026-08-20 11:20 UTC): BTC +%11,4/24s (+%13,2/7g), ETH +%19,1/24s (+%21,5/7g),
+fiyatlar 30 günlük bandın %91-97'sinde. Son 24 saatte **SHORT likidasyon $356,6M'a karşı
+LONG likidasyon $24,8M = 14,4:1** → ralli **kısa kapatmayla** beslendi. ETH ve SOL'de açık
+pozisyon DÜŞERKEN fiyat yükseldi (−%3,5 / −%8,8) = pozisyon kapanışı, yeni talep değil.
+Funding üç majörde de tavanda (%0,0100, kendi son 500 ödemesinin **100. persentili**).
+Sistemin rejim etiketi: trend **BOĞA** (önceki 540 günlük ölçüm penceresinin tamamı
+düşen/testereydi — BTC o pencerede −%34,5).
+
+**Testi neden etkiler:** Kural **"yalnız LONG"**. Test artık büyük ölçüde bir BOĞA
+rejiminde koşacak. LONG kuralının boğada iyi görünmesi **beklenen** bir şeydir ve kuralın
+kendisiyle ilgili bilgi taşımayabilir.
+
+**Bağlayıcı yorum kuralı (şimdi sabitleniyor):**
+
+1. **Kural 5/5 geçerse** → tek başına "bulgu doğrulandı" DENMEZ. Zorunlu ek adım:
+   sonucun rejim kırılımı yazılır (örneklem içindeki BOĞA/AYI günleri ayrılır) ve
+   ikinci doğrulama turu **mutlaka farklı bir rejimi** kapsayacak şekilde açılır.
+   §7'deki "60+ işlem, iki makro rejim" şartı bu yüzden zaten yazılıydı; burada
+   **zorunlu** hale gelir.
+2. **Kural kalırsa** → "rejim kötüydü / şanssızdık" BAHANESİ KULLANILAMAZ. Aksine:
+   LONG kuralı kendi lehine olan bir rejimde bile geçemediyse, hüküm **daha da ağırdır.**
+
+**Not:** Bu rejim değişimi projenin başka bir açık maddesi için İYİ HABER — `D1`
+(likidasyon fade'inin ileriye dönük doğrulaması) aylardır ikinci bir rejim bekliyordu.
