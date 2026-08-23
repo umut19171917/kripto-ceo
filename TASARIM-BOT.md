@@ -6,6 +6,39 @@
 
 ---
 
+## 🔴 EK NOT — 2026-08-23: BU BELGENİN VERİSİ ESKİDİ, ÖNCE BUNU OKU
+
+Bu belge 20 Ağustos'ta, **"K2 haklı olarak geçilemedi (33 işlem, −15,19R, PSR %4,7 →
+kayıp sistematik)"** verisine dayanarak yazıldı. Üç gün sonra tablo değişti:
+
+| Ölçüt | 20 Ağu (bu belgenin dayanağı) | 23 Ağu |
+|---|---|---|
+| İşlem | 33 | **39 — K2 kapısı AŞILDI** |
+| Net | −15,19R | **−5,92R** |
+| PSR (gerçek Sharpe>0 olasılığı) | %4,7 | **%26,4** |
+| Bootstrap %95 GA | [−0,842, −0,029] | **[−0,591, +0,299]** ← sıfırı kapsıyor |
+
+**Sebep: 20-23 Ağustos, sistemin ölçüm tarihindeki İLK GERÇEK BOĞA** (BTC +%10,8/3g,
+ZEC +%44,2, SOL +%10; korelasyon 0,69 = sağlıklı, kontajyon yok). Çekirdek o üç günde
+**6 işlem, 5 kazanç, +9,27R — hepsi LONG.**
+
+**Ne değişti:** "kayıp sistematik" hükmü çöktü. Yerine geçen hüküm *"kazandığı da
+kaybettiği de kanıtlanamıyor"* (net hâlâ negatif).
+
+**⚠ Ne DEĞİŞMEDİ:** 6 işlem / 3 gün / tek ve çok elverişli rejim. +1,545R/işlem
+sürdürülebilir değil; boğada yukarı kırılımın çalışması neredeyse totolojik. Bu proje
+14 kez "buldum" deyip çöken bulgu gördü. **Gerçek sınav: boğa bitince ne olacağı.**
+
+**✅ Boğada BİLE doğrulanan tek sağlam bulgu: SHORT çalışmıyor** (radar boğada SHORT
+0/4, −4,19R; tüm geçmişte de negatif; F&G sınavının kazancı da tamamen "aşırı korkuda
+satmayı engellemek"ten geliyordu — üç bağımsız kaynak aynı yeri gösteriyor).
+
+**Yeni oturumun ilk işi:** §1'deki pivot kararını (sinyal sistemi → kâğıt bot) bu güncel
+tabloyla yeniden tartmak. Karar yanlış olmayabilir — ama gerekçesi artık geçerli değil,
+yeniden gerekçelendirilmeli. Ayrıntı: hafızadaki `bekleyen-isler-defteri.md` en üst bölüm.
+
+---
+
 ## 1. ÜRÜN HEDEFİ DEĞİŞTİ
 
 **Eski hedef (14 aday, K2 kapısı):** *"Sistem sinyal üretir, kullanıcı uygular."*
