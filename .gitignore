@@ -36,3 +36,5 @@ test-*.json
 
 # Aday testi veri onbellegi (gunluk yeniden uretilir)
 _cache/
+.claude/settings.local.json
+.claude/*.yedek

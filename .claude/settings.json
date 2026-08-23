@@ -2,19 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(wait)",
-      "Bash(.venv/Scripts/python.exe -c ' *)",
       "Bash(python -c ' *)",
-      "Bash(.venv/Scripts/python.exe -m py_compile kod/devir_ayikla.py)",
-      "Bash(.venv/Scripts/python.exe kod/devir_ayikla.py)",
       "Bash(python3)",
-      "Bash(.venv/Scripts/python.exe -m py_compile kod/altili_tam.py)",
-      "Bash(.venv/Scripts/python.exe kod/altili_tam.py)",
-      "Bash(.venv/Scripts/python.exe -m py_compile kod/altili_olasilik.py)",
-      "Bash(.venv/Scripts/python.exe kod/altili_olasilik.py)",
-      "Bash(.venv/Scripts/python.exe -m py_compile kod/altili_backtest.py)",
-      "Bash(.venv/Scripts/python.exe kod/altili_backtest.py)",
-      "Bash(.venv/Scripts/python.exe)",
-      "PowerShell(Get-ScheduledTask -TaskName 'TJK Bekci')"
+      "Bash(./venv/Scripts/python.exe)",
+      "Bash(./venv/Scripts/python.exe -c ' *)",
+      "PowerShell(.\\venv\\Scripts\\python.exe durum.py)",
+      "PowerShell(.\\venv\\Scripts\\python.exe defter.py)"
     ]
   }
 }
