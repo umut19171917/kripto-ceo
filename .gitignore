@@ -15,10 +15,15 @@ radar.log
 likidasyon-esik.json
 ozet-durum.json
 radar-defteri.html
+panel.html
+panel-kiyas.json
 
 # KISISEL sicil (tahmin gecmisi) - paylasilmaz
 kripto-defter.json
 radar-defter.json
+# 2026-08-23: kagit botun POZISYON defteri (pozisyon.py). Tahmin degil GERCEK
+# pozisyon gecmisi: miktar, teminat, kaldirac, funding odemeleri, kismi cikislar.
+bot-defter.json
 
 # Telegram bot token'i (kisisel) - paylasilmaz
 telegram.json
@@ -38,3 +43,6 @@ test-*.json
 _cache/
 .claude/settings.local.json
 .claude/*.yedek
+
+# Obsidian ayar klasoru (kisisel, kod degil)
+.obsidian/

@@ -32,8 +32,15 @@ TUTMA_GUN = 14
 # esikler.json'daki 11 sembolun 11'ini birden sildi ve geri alacak kopya YOKTU
 # (14 yedegin hicbirinde bu dosya yok). Kayip SESSIZ: sistem varsayilan esiklere
 # duser, hicbir yerde yazmaz. Ikisi de kucuk (~2KB), maliyeti sifir.
-DOSYALAR = ["kripto-defter.json", "radar-defter.json", "telegram.json", "coinalyze.json",
-            "esikler.json", "likidasyon-esik.json"]
+# 2026-08-23 EKLENDI — bot-defter.json (pozisyon.py'nin kagit pozisyon defteri).
+# Gerekce ayni: gitignore'lu (kisisel sicil), yeri doldurulamaz, ve yeniden
+# uretilemez — tahmin defterinden FARKLI olarak icinde miktar/teminat/kaldirac/
+# funding odemeleri/kismi cikis gecmisi var; bunlar fiyat gecmisinden geri
+# hesaplanamaz. Ayrica bildirim-suzgec.json: kucuk ama bir KARARI tasiyor
+# (hangi mesaj telefona gider), elle yeniden kurmak zahmetli.
+DOSYALAR = ["kripto-defter.json", "radar-defter.json", "bot-defter.json",
+            "telegram.json", "coinalyze.json",
+            "esikler.json", "likidasyon-esik.json", "bildirim-suzgec.json"]
 
 
 def _prune():

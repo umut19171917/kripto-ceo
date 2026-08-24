@@ -1,0 +1,31 @@
+{
+  "_karar": "2026-08-23, kullanici secimi A: coin bazli ANLIK sinyaller telefona itilmeyi birakir; risk ve olcum bilgisi kalir. Tahminler URETILMEYE DEVAM EDER - defter'e yazilir, panel.html'de gorunur. Degisen tek sey: itilen tavsiye olmaktan cikmasi.",
+  "_neden": "Sinyallerin al-tutmayi gectigine dair olcum YOK; gecemedigine dair iki aylik olcum VAR (sistem -%9,6 iken BTC +%28,5, sepet +%45,3). Telefona dusen 'su fiyattan al' mesaji bir eylem davetidir. Panelde duran ayni bilgi ise bakildiginda gorulur.",
+  "_yururluk": "aktif=false iken HICBIR SEY degismez, tum mesajlar gecer. true yapilinca asagidaki liste uygulanir. ⚠ Calisan izleyici/radar surecleri modulu bellege yuklemistir; bu dosya her gonderimde okunur AMA suzgec KODU ancak surecler yeniden baslayinca devreye girer. Yeniden baslatma: on kayit kapaninca (~2026-08-30).",
+  "_gonderim_kaydi": "Susturulan mesaj kaybolmaz: olcucu.log'a '[BILDIRIM] susturuldu' satiri dusuar, tahmin defterine normal sekilde yazilir.",
+  "aktif": false,
+  "gonderilecek": {
+    "SINYAL": false,
+    "TETIK": false,
+    "SONUC": false,
+    "GECERSIZ": false,
+    "RADAR_KURULUM": false,
+    "RADAR_HAREKET": false,
+    "MAKRO": true,
+    "GUNLUK_OZET": true,
+    "SISTEM": true,
+    "DUYURU": true
+  },
+  "_aciklama": {
+    "SINYAL": "[SINYAL] - yeni tahmin, giris/stop/hedef ile. EYLEM TARIFI -> susturulur.",
+    "TETIK": "[TETIKLENDI] - fiyat giris seviyesine ulasti.",
+    "SONUC": "[SONUC] - kar/zarar kapanisi. Panelde ve defterde yasar.",
+    "GECERSIZ": "[GECERSIZ] - tetiklenmeden suresi doldu.",
+    "RADAR_KURULUM": "[RADAR-KURULUM] - radar adayi. Eylem tarifi -> susturulur.",
+    "RADAR_HAREKET": "[RADAR-HAREKET] - zaten Telegram'a gitmiyordu (bilgi katmani).",
+    "MAKRO": "[MAKRO] - kapi ACIK/DIKKAT degisimi. TAHMIN DEGIL, takvim/risk bilgisi -> KALIR.",
+    "GUNLUK_OZET": "[GUNLUK OZET] - gunluk olcum. KALIR (ve al-tut kiyasi eklenecek).",
+    "SISTEM": "[SISTEM] - izleyici basladi/durdu. Saglik -> KALIR.",
+    "DUYURU": "[ONEMLI DUYURU] - delisting vb. Saf risk bilgisi -> KALIR."
+  }
+}

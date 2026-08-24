@@ -187,3 +187,55 @@ kendisiyle ilgili bilgi taşımayabilir.
 
 **Not:** Bu rejim değişimi projenin başka bir açık maddesi için İYİ HABER — `D1`
 (likidasyon fade'inin ileriye dönük doğrulaması) aylardır ikinci bir rejim bekliyordu.
+
+---
+
+## EK 3 — 2026-08-23: HÜKMÜN REJİM ŞERHİ (KURAL VE KILL ŞARTLARI YİNE DEĞİŞMEDİ)
+
+> ⚠ **Bu ek de yalnızca YORUM şerhidir.** Kural (§2), örneklem (§3) ve kill şartları (§4)
+> dokunulmadan duruyor. **Sonuç görülmeden yazıldı.** Şerhi yazarken örneklemin yalnızca
+> **tarih ve damga metaverisine** bakıldı; hiçbir işlemin `sonuc_R`'sine BAKILMADI —
+> ara sonuca bakma yasağı (§8) korundu.
+
+**Kullanıcının 2026-08-23'te koyduğu şerh, aynen:**
+
+> *"Koşan ön kayıt 18 Ağustos'ta açıldı, boğa 20'sinde başladı. Yani test neredeyse
+> tamamen boğada tamamlanacak ve test edilen kural 'ACIK + LONG'. Geçerse bunun
+> filtreden mi rejimden mi geldiğini ayıramayacağız."*
+
+**Şerh haklıdır ve EK 2'nin söylediğinden daha ağırdır.** EK 2 (20 Ağu) "test artık
+büyük ölçüde bir BOĞA rejiminde koşacak" demişti — o an bu bir öngörüydü. Bugün ölçüldü:
+
+| Örneklem bileşimi (12/30) | |
+|---|---|
+| Boğa döneminde (≥20 Ağu) oluşturulan | **11 / 12** |
+| Boğa öncesi oluşturulan | 1 / 12 |
+| Rejim damgası SAKIN | 12 / 12 (OYNAK: 0) |
+| Makro damgası ACIK | 12 / 12 |
+
+Kalan 18 işlem aynı rejimde gelirse hüküm **fiilen %100 boğa örneklemiyle** verilecek.
+
+**🔴 İKİNCİ VE DAHA CİDDİ SORUN — kuralın ACIK bacağı sınanmıyor.**
+Kayıttan beri üretilen 103 radar tahmininin **95'i ACIK, yalnız 8'i DİKKAT** damgalı.
+Yani DİKKAT süzgeci örneklemin ~%8'ini eliyor. Oysa EK 1'de kaydedildiği gibi, özgün
+analizde **manşet rakamı tam olarak DİKKAT elemesine dayanıyordu** (10 işlem çıkarıyor,
+PSR'yi %84 → %95 taşıyan o 10 işlem). Bu koşuda o bacak neredeyse hiç iş yapmıyor.
+
+**Sonuç: bu test ne söylerse söylesin, hükmü "ACIK + LONG" kuralı hakkında değil,
+pratikte "LONG" hakkında olacaktır.**
+
+### Bağlayıcı yorum kuralı — EK 2'nin 1. maddesine EKLENİR (şimdi sabitleniyor)
+
+3. **Kural 5/5 geçerse, hüküm şu cümleyle kayda geçer ve başka türlü yazılamaz:**
+   *"Kural, boğa rejiminde ve makro kapının sürekli ACIK olduğu bir pencerede geçti;
+   diğer rejimde ve kapının fiilen ayrım yaptığı bir pencerede SINANMADI."*
+   Boğadaki bir LONG kuralının geçmesi ile rejimin kendisi ayrıştırılamaz — bu örneklemle
+   ayrıştırma **imkânsızdır**, sonradan yapılacak hiçbir alt-kırılım bunu düzeltmez.
+   §7'deki ikinci tur (60+ işlem, iki makro rejim) bu yüzden **şart değil, zorunluluktur**
+   ve ikinci tur **ayı/testere rejimini kapsamadan kapanamaz.**
+4. **Kural kalırsa** EK 2'nin 2. maddesi aynen geçerli: "rejim kötüydü" bahanesi
+   kullanılamaz, hüküm daha da ağırdır.
+
+**Not (yöntem):** Bu şerh testin değerini düşürmez, **hükmün kapsamını daraltır.**
+Test hâlâ koşmaya değer — çünkü asıl işlevi, zayıf bir post-hoc hücrenin ileriye dönük
+olarak sınanmasıdır. Değişen şey, geçtiği takdirde ne kadar şey iddia edebileceğimizdir.

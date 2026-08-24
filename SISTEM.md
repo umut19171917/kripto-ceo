@@ -602,6 +602,80 @@ taşımadığını **iki bağımsız yöntemle** gösterdi, B1'de son filtre ada
    topluyordu — §11'deki düzeltmeye bak).
 5. **Meta karar: sistem tahmin üretmeye devam etsin mi?** Etmezse veri toplama sürer
    (likidasyon doğrulaması buna bağlı).
+6. 🆕 **FUNDING BİLEŞENİNİN AYRIM GÜCÜ** (2026-08-23'te eklendi — **HENÜZ TEST EDİLMEDİ**).
+
+   **Ölçülen olgu:** 11 sembolün **6'sında** `long_crowded` eşiği funding tavanına
+   yapışmış — beşi tam %0,0100'de (LINK, DOGE, ZEC, ADA, NEAR), LAB kendi tavanında
+   (0,000257). `olcucu.squeeze_scores()` şunu yapıyor:
+
+   ```
+   if funding >= long_c:   ls += 30      # LONG SQUEEZE bileşeni
+   ```
+
+   Eşiğin kendisi tavandayken ve funding de tavandayken bu koşul **koşulsuz doğru**
+   olur → LONG-squeeze skoruna **sabit +30 puan**. Ve LONG squeeze = aşağı risk =
+   **SHORT sinyali**.
+
+   **Neden önemli:** bu, B6'da bulunan "skorun yön bilgisi taşımaması" hastalığının
+   aynısı olabilir — ama **daha kötüsü**, çünkü ölü ağırlık nötr değil, sistemi
+   **kanıtlanmış kaybeden yöne** itiyor. Canlı sayım destekliyor: ön kayıttan beri
+   üretilen 103 radar tahmininin **73'ü SHORT, 30'u LONG** — hem de boğada.
+   Ve radar SHORT boğa öncesi bile n=48, −0,378R, GA [−0,696, −0,020] (sıfırı dışlıyor).
+
+   **Test (L/S bileşeninde kullanılan yöntemin aynısı):** işlemleri *funding bileşeni
+   ateşledi / ateşlemedi* diye ayır, net-R'leri karşılaştır (bootstrap + etiket
+   permütasyonu). **Ayrım yoksa bileşen ölüdür** ve skordan çıkarılması gerekir.
+
+   ⚠ **ŞİMDİ TEST EDİLMEYECEK.** Ön kayıt koşuyor ve şu an ölçüm aleti yazılıyor.
+   K2 oturumunda, **doğru maliyet modeliyle** yapılacak. (Kullanıcı talimatı, 2026-08-23.)
+
+   🔴 **AYNI GÜN AKŞAM DÜZELTİLDİ — kapsam ana sicille sınırlı sanılandan farklı.**
+   İlk yazıldığında bu madde radar'ın short eğilimini de açıklıyor sanılmıştı. **Radar
+   `esikler.json`'ı KULLANMIYOR** — `tarayici.kalibre()` ile her sembol için taze eşik
+   üretir (funding'in 15/50/85 persentili). Ölçüldü: eşiğin tavana yapışma oranı
+   **ana sicil %55 (6/11), radar evreni %35 (14/40)**. Yani mekanizma radarda da var
+   ama zayıf — ve bu, ana sicilin neden %79 SHORT, radar'ın neden %52 (dengeli)
+   olduğunu tutarlı biçimde açıklıyor. Madde geçerli; kapsamı ana sicil ağırlıklı.
+
+7. 🆕 **L/S BİLEŞENİNİN SİMETRİSİZLİĞİ** (2026-08-23 akşam denetiminde bulundu —
+   **HENÜZ TEST EDİLMEDİ**). Madde 6'dan daha genel, çünkü **her iki sicili de** etkiler.
+
+   `olcucu.squeeze_scores()` içinde iki dal:
+
+   ```
+   SHORT-squeeze (LONG sinyali) :  if ls_ratio < 1.0  ->  ss += 20
+   LONG-squeeze  (SHORT sinyali):  if ls_ratio > 1.5  ->  ls += 20
+   ```
+
+   Eşikler **koda gömülü sabit** (1,0 ve 1,5). Canlı ölçüm (60 sembol, radar evreni):
+   **medyan ls_ratio = 1,50.**
+
+   | ls_ratio | Hangi dala +20 | Sembol payı |
+   |---|---|---|
+   | < 1,0 | LONG sinyali | **%17** |
+   | 1,0 – 1,5 | hiçbiri | %33 |
+   | > 1,5 | **SHORT sinyali** | **%50** |
+
+   → **+20 puan, SHORT sinyaline 3 kat daha sık gidiyor.** Eşikler dağılımın etrafında
+   simetrik değil; medyan tam olarak üst eşiğin üzerinde duruyor.
+
+   **Asıl tutarsızlık:** `funding` persentille kalibre ediliyor (15/50/85), `oi_rising`
+   persentille kalibre ediliyor (80), ama **`ls_ratio` hiç kalibre edilmiyor.** Bu bir
+   tasarım kararı gibi değil, gözden kaçmış gibi duruyor. (Kalabalık-taraf mantığı
+   gereği ikisinin de persentil olması beklenirdi.)
+
+   **Test (madde 6 ile aynı yöntem):** işlemleri L/S bileşeni ateşledi/ateşlemedi diye
+   ayır, net-R karşılaştır. Ayrıca: eşikleri persentile çevirmek yön dağılımını
+   değiştiriyor mu, geriye dönük ölç.
+
+   ⚠ **ŞİMDİ TEST EDİLMEYECEK / DÜZELTİLMEYECEK** — `squeeze_scores` değişirse koşan
+   ön kayıt geçersiz olur (ON-KAYIT-radar-v2.md §6: "plan mekaniği değişirse iptal").
+
+8. 🆕 **RADAR'DA RİSK TAVANI VE COOLDOWN YOK** (2026-08-23 denetimi). Ana sicilde
+   ikisi de var (`defter.RISK_TAVANI_PCT = 2.0`, `COOLDOWN_SAAT = 12`); `radar_defter.py`'de
+   **hiçbiri yok**. Ölçüldü: radar tepe noktada **10 pozisyon birden**, **7'si aynı yönde**.
+   Coinler arası korelasyon 0,69 → o 7 pozisyon 7 ayrı bahis değil, tek bahsin 7 kopyası.
+   ⚠ Korumasız olan sicil, ön kaydın test ettiği sicil. **Ön kayıt kapanır kapanmaz ilk iş.**
 ❌ **F&G kapısı** — 2026-08-15'te beş şartlı sınavda DÜŞTÜ (§9.8-B1). Tekrar açma.
 
 ❌ **DÜŞENLER (tekrar açma):** seviye penceresi, mutlak funding tabanı, basis (iki kez),
@@ -609,6 +683,12 @@ geniş-stop/zaman-aşımı çıkışı.
 
 ⚠ **YÖNTEM UYARISI:** K2 günü hepsini birden uygulama — **1-2 değişiklik**, gerisi sonraki
 tura. Aksi halde sonraki 30 işlem iyi/kötü gittiğinde hangisinin etkilediği ölçülemez.
+
+🔵 **K2 OTURUMU ERTELENDİ — İPTAL DEĞİL (2026-08-23, kullanıcı kararı).** Gündem aynen
+duruyor. Tetik: `radar-v2` ön kaydı kapanınca (~30 Ağu tahmini) ve **doğru maliyet
+modeliyle** (`pozisyon.py` — 2026-08-23'te kuruldu ve 211 geçmiş işlemde doğrulandı).
+Gerekçe: K2 kararlarının hepsi net-R'ye bakıyor; net-R'nin muhasebesi yenilendiği için
+oturumu eski aletle açmak yanlış olurdu.
 
 **K3 günü (gerçek para öncesi zorunlu):**
 - Gap/kayma nicelleştirme (sicilimizin çalkantıda iyimserliği)
