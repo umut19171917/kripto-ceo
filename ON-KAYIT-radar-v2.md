@@ -239,3 +239,89 @@ pratikte "LONG" hakkında olacaktır.**
 **Not (yöntem):** Bu şerh testin değerini düşürmez, **hükmün kapsamını daraltır.**
 Test hâlâ koşmaya değer — çünkü asıl işlevi, zayıf bir post-hoc hücrenin ileriye dönük
 olarak sınanmasıdır. Değişen şey, geçtiği takdirde ne kadar şey iddia edebileceğimizdir.
+
+---
+
+## EK 4 — 2026-08-24: TESTİN İSTATİSTİKSEL GÜCÜ (KURAL VE KILL ŞARTLARI YİNE DEĞİŞMEDİ)
+
+> ⚠ **Bu ek de yalnızca YORUM şerhidir.** Kural (§2), örneklem (§3) ve kill şartları (§4)
+> dokunulmadan duruyor. **Sonuç görülmeden yazıldı** — 14/30'da, hiçbir ara sonuca
+> bakılmadan. Şerhi yazarken yalnızca *dağılımın genişliği* kullanıldı; koşan testin
+> kendi işlemlerinin R'lerine BAKILMADI.
+>
+> **Bu ek bir MAZERET DEĞİLDİR.** Aşağıdaki 5. madde, onu mazeret olarak kullanmayı
+> açıkça yasaklar. Erken yazılmasının sebebi tam olarak budur: sonradan yazılsaydı
+> mazerete dönüşürdü.
+
+### Neden yazıldı
+
+Testin **istatistiksel gücü hiç hesaplanmamıştı.** Ön kayıt yazılırken "30 işlem"
+hedefi konuldu ama *"30 işlem ne büyüklükte bir etkiyi görebilir?"* sorusu sorulmadı.
+2026-08-24'te soruldu ve cevap testin kapsamını daraltıyor.
+
+### Ölçüm
+
+Net R'nin standart sapması, testin evrenine en yakın geçmiş kümeden (radar LONG+ACIK,
+n=76): **sd = 1,545**. Buradan n=30 için:
+
+- standart hata = 1,545 / √30 = **0,282**
+- **1. kill şartının** (bootstrap %95 GA alt sınırı > 0) geçmesi için gözlenen
+  ortalamanın **+0,553R/işlem**'i aşması gerekir
+- Bu, ana sicil sıklığında kabaca **yılda %252** demektir
+
+**Gerçek etki şu büyüklükteyse, 1. şartı geçme olasılığı:**
+
+| Gerçek edge | Geçme olasılığı |
+|---|---|
+| +0,05R | %3,7 |
+| +0,10R | %5,4 |
+| +0,15R | %7,7 |
+| +0,20R | %10,6 |
+| **+0,313R** ← §1'de gözlenen hücrenin kendi değeri | **%19,8** |
+| +0,40R | %29,4 |
+| +0,55R | %49,6 |
+
+⚠ Bunlar **yalnız 1. şart** içindir. §4 **beş şartın BEŞİNİ birden** ister (isabet,
+PSR ≥ %95, yoğunlaşma, iki yarı). Dolayısıyla gerçek geçme olasılığı bu tablodakinden
+**daha düşüktür**; tablo bir ÜST SINIRDIR.
+
+### Bunun anlamı
+
+**Test, "edge var mı?" sorusunu değil, "DEVASA bir edge var mı?" sorusunu soruyor.**
+
+En çarpıcı satır sonuncusundan biri: §1'de gözlenen **+0,313R** hücresi *tamamen
+gerçek olsa ve aynen sürse bile*, bu test onu ancak **beşte bir** ihtimalle
+doğrulayabilir. Yani testin başarısızlığı, hipotezin yanlışlığından çok testin
+küçüklüğünden kaynaklanabilir.
+
+### Bağlayıcı yorum kuralı — EK 3'ün 3. ve 4. maddelerine EKLENİR
+
+5. **Kural KALIRSA (beklenen sonuç), hüküm şu iki cümleyle birlikte kaydedilir ve
+   ayrılamaz:**
+   - *"Kural, §4'ün beş şartını geçemedi ve §7 gereği ölmüştür."* — **bu aynen geçerlidir.**
+     Bu şerh kuralı DİRİLTMEZ, `G — KAPALI` listesine yazılmasını engellemez.
+   - *"Testin gücü, gözlenen dağılımla +0,553R/işlem'dir; bu başarısızlık 'edge yoktur'
+     değil, 'DEVASA edge gösterilememiştir' anlamına gelir."*
+
+   ⛔ **Bu şerh, EK 2 madde 2'yi geçersiz kılmaz.** "Rejim kötüydü / şanssızdık"
+   bahanesi hâlâ **YASAK**. Ve "test zayıftı, o yüzden kuralı tekrar açalım" da
+   **YASAK** — kural §7'ye göre ölür ve tekrar açılmaz. Şerhin izin verdiği tek şey,
+   hükmün KAPSAMINI doğru yazmaktır: ölen şey *"büyük edge iddiası"*dır, *"edge
+   ihtimali"* değil.
+
+6. **Kural GEÇERSE**, düşük güç hükmü **güçlendirmez, aksine daraltır**: %20'lik bir
+   pencereden geçmiş olmak, etkinin gerçekten +0,553R olduğunu değil, gözlenen
+   ortalamanın o eşiği aştığını gösterir. Post-hoc hücrelerin ortalamaya geri döndüğü
+   (§5) hatırlanmalı; ikinci tur (EK 3 madde 3) **zaten zorunluydu, öyle kalır.**
+
+### 🔴 YÖNTEM DERSİ (arşive geçer)
+
+**Ön kayıt yazılırken güç hesabı yapılmadı.** "30 işlem" sayısı, ne kadar sürede
+toplanacağına göre seçildi — ne göreceğine göre değil. Bu, ön kaydın kendisinin bir
+tasarım kusurudur ve bu projede ilk kez tespit ediliyor.
+
+**Bundan sonraki her ön kayıt, örneklem büyüklüğünü kill şartıyla birlikte
+gerekçelendirmek zorundadır:** *"n=X, sd=Y varsayımıyla ancak Z büyüklüğünde bir
+etkiyi görebilir; aradığımız etki Z'den küçükse bu test onu bulamaz."*
+
+Bu cümle yazılmadan hiçbir ön kayıt dondurulmamalıdır.
