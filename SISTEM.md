@@ -626,8 +626,53 @@ taşımadığını **iki bağımsız yöntemle** gösterdi, B1'de son filtre ada
    ateşledi / ateşlemedi* diye ayır, net-R'leri karşılaştır (bootstrap + etiket
    permütasyonu). **Ayrım yoksa bileşen ölüdür** ve skordan çıkarılması gerekir.
 
-   ⚠ **ŞİMDİ TEST EDİLMEYECEK.** Ön kayıt koşuyor ve şu an ölçüm aleti yazılıyor.
-   K2 oturumunda, **doğru maliyet modeliyle** yapılacak. (Kullanıcı talimatı, 2026-08-23.)
+   🔴 **ÖLÇÜLDÜ — 2026-08-24, `ariza_olcum.py`. HİPOTEZ DOĞRULANMADI.**
+
+   Yöntem: vekil değil **birebir yeniden kurulum**. `premiumIndex.lastFundingRate`
+   = son ödenen funding; tam geçmişi `/fapi/v1/fundingRate`'te. `long_crowded` =
+   son 500 ödemenin 85. persentili. İkisi de tahmin anına göre yeniden hesaplandı
+   → "bileşen ateşledi mi" sorusu kodun yaptığı hesabın aynısıyla cevaplandı.
+   **530/537 tahmin yeniden kurulabildi.**
+
+   **6a — MEKANİZMA: DOĞRULANDI, ezici biçimde.**
+
+   | Küme | n | LONG | SHORT | SHORT payı |
+   |---|---|---|---|---|
+   | +30 ateşledi | 259 | 62 | 197 | **%76,1** |
+   | ateşlemedi | 271 | 142 | 129 | %47,6 |
+
+   Fark **+28,5 puan**, permütasyon **p < 0,00001** → Bonferroni eşiğini (0,00217)
+   **GEÇİYOR.** Bileşenin yönü sürüklediği artık ölçülmüş bir olgudur.
+
+   **6b — ZARAR: DOĞRULANMADI. Üstelik işaret TERS.**
+
+   | Küme | n | net R | işlem başına | %95 GA |
+   |---|---|---|---|---|
+   | +30 ateşledi | 259 | **+7,89** | +0,030 | [−0,071, +0,137] |
+   | ateşlemedi | 271 | **−17,58** | −0,065 | [−0,183, +0,058] |
+
+   Fark **+0,095R ateşleyenin LEHİNE**, p=0,243 → eşiği geçmiyor. İki aralık da
+   sıfırı kapsıyor: hiçbiri kanıtlanmış değil ve **birbirlerinden ayrılamıyorlar.**
+
+   **6c — YAYGINLIK:** eşik tavanda %34, funding tavanda %25, **ikisi birden
+   (+30 kaçınılmaz) %16.** Yani "6/11 sembolde eşik yapışmış" ifadesi operasyonel
+   etkiyi ABARTIYORDU — sembol değil, sembol-zaman kombinasyonu sayılmalı.
+
+   ⚠ **BETİMLEYİCİ AYRIŞTIRMA (test DEĞİL, hücre seçimi — ders 5):**
+   +30/LONG n=62 **+0,172** · +30/SHORT n=197 **−0,014** ·
+   ateşlemedi/LONG n=141 +0,138 · ateşlemedi/SHORT n=129 **−0,279**.
+   Yani LONG iki grupta da benzer; fark tamamen SHORT'ta: bileşen ateşlediğinde
+   SHORT'lar **başabaşa yakın**, ateşlemediğinde **ağır kaybediyor**. Bu, sistemin
+   kurulduğu tezin ta kendisi (kalabalık long → long squeeze → aşağı). **Post-hoc
+   hücredir, bulgu değildir** — ama "bileşeni çıkaralım" fikrini zayıflatır.
+
+   **HÜKÜM: madde yeniden yazıldı.** Eski hâli *"muhtemelen ölü ağırlık, test et
+   ve çıkar"* diyordu. Ölçüm sonrası: **mekanizma kanıtlandı, zarar çürütüldü,
+   olası DEĞER var. Sınanmadan ÇIKARILMAZ.** K2'de yapılacak iş "çıkarmak" değil,
+   "eşik tavana yapıştığında ne oluyor" sorusunu ayrıca sınamak.
+
+   ⚠ Bu ölçüm 22. hipotezdir. Hiçbir şey düzeltilmedi; düzeltme `squeeze_scores`a
+   dokunmayı gerektirir → ön kayıt kapanınca.
 
    🔴 **AYNI GÜN AKŞAM DÜZELTİLDİ — kapsam ana sicille sınırlı sanılandan farklı.**
    İlk yazıldığında bu madde radar'ın short eğilimini de açıklıyor sanılmıştı. **Radar
@@ -668,8 +713,26 @@ taşımadığını **iki bağımsız yöntemle** gösterdi, B1'de son filtre ada
    ayır, net-R karşılaştır. Ayrıca: eşikleri persentile çevirmek yön dağılımını
    değiştiriyor mu, geriye dönük ölç.
 
-   ⚠ **ŞİMDİ TEST EDİLMEYECEK / DÜZELTİLMEYECEK** — `squeeze_scores` değişirse koşan
-   ön kayıt geçersiz olur (ON-KAYIT-radar-v2.md §6: "plan mekaniği değişirse iptal").
+   🔵 **ÖLÇÜLDÜ — 2026-08-24. GEÇMİŞE DÖNÜK TEST KURULAMIYOR.**
+   `ls_ratio` **hiçbir yerde saklanmıyor**: defterde yok, `olcucu.log`'da yok
+   (log yalnız SS/LS toplamını yazıyor, bileşenleri değil), `signals.json` anlık.
+   Ve funding'den farklı olarak **API geçmişi de yetersiz** (~30 gün).
+   Bu bir **veri eksiği**, yöntem eksiği değil.
+
+   **Arızanın büyüklüğü bugünün evreninde ölçüldü (69 sembol):** medyan ls_ratio
+   **1,46**; mevcut eşiklerle `<1,0` %19 (LONG'a +20) vs `>1,5` %46 (SHORT'a +20)
+   → **+20 puan SHORT'a 2,5 kat daha sık.** Persentille (15/85) kalibre edilseydi
+   %16 / %16 — tanım gereği simetrik.
+
+   ⚠ **ZARAR ÖLÇÜLEMEDİ.** Madde 6'nın dersi burada da geçerli: simetrisizlik
+   ölçülmüş bir OLGU, ama zarar verdiği **kanıtlanmadı** ve kanıtlanmadan
+   düzeltilmemeli. Madde 6'da tam olarak bu varsayım çürüdü.
+
+   **YAPILACAK (ön kayıt kapanınca): önce `ls_ratio`'yu loglamaya başla.**
+   Düzeltme değil, ÖLÇÜM açar — ileriye dönük test ancak öyle mümkün olur.
+
+   ⚠ **ŞİMDİ DÜZELTİLMEYECEK** — `squeeze_scores` değişirse koşan ön kayıt
+   geçersiz olur (ON-KAYIT-radar-v2.md §6: "plan mekaniği değişirse iptal").
 
 8. 🆕 **RADAR'DA RİSK TAVANI VE COOLDOWN YOK** (2026-08-23 denetimi). Ana sicilde
    ikisi de var (`defter.RISK_TAVANI_PCT = 2.0`, `COOLDOWN_SAAT = 12`); `radar_defter.py`'de
