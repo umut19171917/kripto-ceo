@@ -347,8 +347,18 @@ hâlâ 5 şarttır. Kapı, **altyapı** için yeniden tanımlandı.
 | 1 | `pozisyon.py` — simülatör çekirdeği + gerçekçi maliyet | 2-3 gün | ▶ başlandı 23 Ağu |
 | 2 | `panel.py` — HTML arayüz (açık pozisyonlar, equity, işlem defteri) | 2 gün | sırada |
 | — | ⛔ **DURAK: `radar-v2` ön kaydı kapanana kadar İLERLEME YOK** | — | ~30 Ağu tahmini |
-| 3 | `atolye.py` — config atölyesi + **deneme sayacı** + güven aralıkları | 2 gün | duraktan SONRA |
-| 4 | Terfi kapısı (walk-forward + 5 şart) | 1 gün | duraktan sonra |
+| 3 | **`strateji/`** — eklenti arayüzü: `f(snapshot, portfoy) -> emirler` | 1-2 gün | duraktan SONRA |
+| 4 | **`bot.py`** — pozisyon yöneten döngü (`bot-defter.json`'a YAZAN tek şey) | 2 gün | duraktan sonra |
+| 5 | `atolye.py` — config atölyesi + **deneme sayacı** + güven aralıkları | 2 gün | duraktan sonra |
+| 6 | Terfi kapısı (walk-forward + 5 şart) | 1 gün | duraktan sonra |
+
+🔴 **2026-08-24 DENETİMİ — 3 ve 4 SONRADAN EKLENDİ, PLANDA HİÇ YOKTULAR.**
+§2 beş modül sayıyor ama §7'nin ilk hâli yalnız 4 madde içeriyordu ve `strateji/`
+ile `bot.py` **hiç girmemişti.** Sonuç sessiz ve ağır olurdu: `pozisyon.py` bir
+pozisyonu *hesaplayabilir* ama *yaratamaz* — `bot-defter.json`'a yazan hiçbir şey
+olmazdı, panelin "Kâğıt Bot" bölümü sonsuza kadar boş kalırdı ve kullanıcının
+istediği **kâğıt işlem botu hiç doğmazdı.** Simülatör ile arayüz arasındaki halka
+eksikti. ⚠ Sıra önemli: `strateji/` önce gelir, çünkü `bot.py` ondan emir alır.
 
 **Durağın gerekçesi (§4'ün kendi mantığının bu haftaya uygulanması):** §4 diyor ki
 *"parametre oynatma arayüzü aşırı-uydurma makinesidir."* 20-23 Ağustos'ta ekranda
