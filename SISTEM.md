@@ -533,6 +533,69 @@ test eder. Eleme yaklaşımı ileriye dönük doğrulamayı geçerse yöntem me�
 geçmezse yöntem de düşer. **O güne kadar yöntem olarak KULLANILMAZ** — tek uygulaması
 ön kayıtlı testtir.
 
+
+### 9.11 ÖLÇÜM YÖNTEMİ — İKİ KUSUR (2026-08-25, dış proje incelemesinden doğdu)
+
+Kaynak: `github.com/irisphotofethiye-bocici/kripto-trade` ikinci incelemesi. İkisi de
+**bizim kayıtlı hükümlerimizi** etkiliyor; ikisi de bu projede ÖLÇÜLDÜ.
+
+**A — HAM GETİRİ HİÇ ÖLÇÜLMEDİ: "14/14 düştü" hükmü kısmen stopumuzun eseri olabilir.**
+
+Dış projenin en pahalı dersi: *"bizim stopumuzun öldürdüğü bir kenarı 'sinyal boş' diye
+kaydederiz."* Somut vakaları: `>40 LONG` hücresini "gürültü, öldü" diye gömmüşler; ham
+ileri getiride **+2,284**, takip eden stopla **+2,379 (t=+3,24)**. Ölen sinyal değil,
+stopları.
+
+⚠ **Bize doğrudan uyuyor.** 14 adayın **tamamı** sabit **2,5 ATR stop + R/R 2,08** ile
+ölçüldü. Ham ileri getiriyi hiç ölçmedik. Dolayısıyla §9.7'deki *"tahmin ailesi kapandı,
+hayatta kalan sıfır"* hükmünün ne kadarı sinyalin, ne kadarı **mekaniğin** — bilmiyoruz.
+
+**Ölçüm sırası (bundan sonra bağlayıcı):** `ham ileri getiri → ticaret mekaniği → portföy`.
+
+**Somut sınama — hüküm yazmadan önce koşulur:** karşılaştırılan hücrelerde *stop genişliği*
+ve *stop-olma oranı* eşit mi? Dış projede 3,3 kat değişiyordu; o tabloyla *"mekanik her
+hücrede aynı"* savunması çöker. Ayrışıyorsa **ham getiri zorunlu.**
+
+⚠ **Güven de şişer:** stop varyansı kırdığı için anlamlılık büyür — onlarda ham t=−0,90
+iken stopla t=−4,11. **Yön aynı, güven yalan.** Bizim bootstrap aralıklarımız da
+stop-kırpılmış R üzerinde: *"strateji para kazanıyor mu"* için doğru, *"sinyalde bilgi
+var mı"* için değil. İki soru ayrı; aralıklar yalnız birincisini cevaplıyor.
+
+**B — ALAN TANIMI PENCERE ORTASINDA DEĞİŞTİ (ölçüldü).**
+
+`rejim.py`, **2026-07-18** (commit `55e137a`) — canlı ölçüm penceresinin ortasında:
+
+```
+- for s in olcucu.SYMBOLS:      # o gun 5 sembol: BTC/ETH/SOL/LINK + LAB
++ for s in KOR_SYMS:            # sabit 4 major
+```
+
+Aynı commit `SYMBOLS`'ü 5→11 yaptı; sabitleme metrik kaymasın diye eklenmişti — ama
+**LAB, kırılmadan önceki korelasyona dahildi**, sonra değil.
+
+| | kırılma öncesi damgalı | sonrası | korelasyon medyanı |
+|---|---|---|---|
+| Ana sicil | **4** | 84 | **0,85 → 0,70** |
+| Radar | **28** | 361 | **0,84 → 0,70** |
+
+⚠ **Dürüst sınır:** farkın tanımdan mı piyasadan mı geldiği bu veriyle **ayrıştırılamaz** —
+iki dönemi tek tabloda toplamayı geçersiz kılan da tam olarak budur.
+
+**Etkilenen:** `sicil_analiz.py`'nin "rejim durumu (damga)" ve "korelasyon bandı" tabloları
+(32 kayıt kirli, %5,7). **Etkilenmeyen ve bu oturumun hükümleri buna dayanıyor:** boğa
+öncesi/sonrası ayrımı (tarihe göre), al-tut kıyası (fiyata göre), G2/G4 gerekçeleri.
+
+**Refleks (bağlayıcı):** bir alanla uzun pencere bölmeden önce `git log -S"<alan>"` koştur.
+
+**C — YAN BULGU: `/futures/data/*` UÇLARI 30 GÜNLÜK (kendi ölçümümüz).**
+`globalLongShortAccountRatio` · `openInterestHist` · `takerlongshortRatio`:
+**29 gün geriye OK, 32 günde HTTP 400.** `klines` ve `fundingRate` kalıcı.
+→ **`ls_ratio` sonradan çekilemez**, yalnız o an arşivlenirse vardır. §12 madde 7'nin
+(L/S simetrisizliğinin ZARARI) testi, arşivleme başlamadan **hiçbir zaman** yapılamaz.
+Bekleyenler listesi madde **7.1** — acil, dondurulmuş dosyalara dokunmadan yapılabilir.
+
+---
+
 ---
 
 ## 10. KARAR KAPILARI (disiplinin kalbi)
