@@ -2,12 +2,20 @@
   "permissions": {
     "allow": [
       "Bash(wait)",
-      "Bash(python -c ' *)",
       "Bash(python3)",
       "Bash(./venv/Scripts/python.exe)",
-      "Bash(./venv/Scripts/python.exe -c ' *)",
       "PowerShell(.\\venv\\Scripts\\python.exe durum.py)",
       "PowerShell(.\\venv\\Scripts\\python.exe defter.py)"
+    ],
+    "deny": [
+      "Edit(defter.py)",
+      "Write(defter.py)",
+      "Edit(radar_defter.py)",
+      "Write(radar_defter.py)",
+      "Edit(olcucu.py)",
+      "Write(olcucu.py)",
+      "Edit(makro.py)",
+      "Write(makro.py)"
     ]
   }
 }

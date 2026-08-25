@@ -42,7 +42,9 @@ test-*.json
 # Aday testi veri onbellegi (gunluk yeniden uretilir)
 _cache/
 .claude/settings.local.json
-.claude/*.yedek
+# 2026-08-25: desen *.yedek idi, tarih damgali yedekleri (.yedek-20260825-...)
+# KACIRIYORDU -> ayar yedekleri depoya gidecekti. *.yedek* hepsini yakalar.
+.claude/*.yedek*
 
 # Obsidian ayar klasoru (kisisel, kod degil)
 .obsidian/
