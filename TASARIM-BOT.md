@@ -202,6 +202,29 @@ böyle 14 aday ayakta kaldı.
 
 ---
 
+### 🆕 DIŞ PROJEDEN ALINAN DÖRT KURAL (2026-08-24)
+
+Kaynak: `github.com/irisphotofethiye-bocici/kripto-trade` — bağımsız ama şaşırtıcı
+derecede benzer bir kardeş proje (aynı dosya adları, aynı "0 token deterministik
+Python + LLM sadece final" mimarisi, o da Claude Code projesi). **Kendi kapısını
+geçemedi** (kâğıt bot $1000 → −$329,63, 19 günde −%33) ve "Tur-2"ye döndü.
+
+⚠ **Onlardan alınacak en önemli şey bir kural değil, bir UYARI:** "Faz 4" kapısını
+**GEÇTİ** ilan edip gerçek paraya açtılar — oysa kapının 1. kriteri "7/7 gün ölçüm"
+isterken fiilen **2/7** ölçülmüş ve **"KISMEN PASS"** yazılmıştı; 3. kriterin örneklemi
+**n=7**; eşiği sayı değil yargıydı ("isabeti makul"); günlükler sonradan retrospektif
+dolduruldu. **Bizim F&G adayımız 4/5 ile ölmüştü** çünkü kural "beşi de geçmeli"
+diyordu. Aradaki fark, 1000 doların hâlâ duruyor olmasının sebebi.
+
+| # | Kural | Ne zaman |
+|---|---|---|
+| 7 | **KALDIRAÇ GÜVENLİK KIRPMASI.** Kaldıraç, stop DAİMA likidasyondan önce gelecek şekilde otomatik kırpılır; güvenli değer yoksa pozisyon **hiç açılmaz**. ⚠ Ayrım korunur: `pozisyon.py` bir ÖLÇÜM aletidir, tehlikeyi **gösterir** (`uyarilar()`) — kırpma `bot.py` katmanında yapılır. | `bot.py` yazılırken |
+| 8 | **KARMAŞIKLIK BÜTÇESİ.** *Veri/ölçüm ucuz (karar vermez); KURAL pahalı — kurallar etkileşir, kural sayısı arttıkça beklenmedik birleşimler karesel artar.* **Her yeni karar-kuralı yanında bir EMEKLİLİK ADAYI ister.** | K2 oturumu |
+| 9 | **DEĞİŞİKLİK PROTOKOLÜ.** Eski kriter **silinmez**, yanına `[DEĞİŞTİ tarih: yeni değer — kullanıcı kararı, gerekçe]` eklenir. Model değişiklik **önerebilir, kendi inisiyatifiyle uygulayamaz.** Artı: **"şüphede DAİMA statüko"** — bir kriterin verisi eksikse karar otomatik "değişiklik YOK". | hemen |
+| 10 | **BUG İSTİSNASI AYRACI.** *"Bu değişiklik botun hangi işlemi açacağını/kapatacağını değiştiriyor mu?"* Değiştiriyorsa **strateji değişikliğidir → bekler**; değiştirmiyorsa (log, mutabakat, çökme onarımı) bug-fix'tir. ⚠ **Bizim ek şartımız:** bug-fix bile olsa dondurulmuş DOSYALARA dokunuyorsa **yine bekler** — ON-KAYIT §6 davranış değil **dosya** sayar. | **şu an geçerli** |
+
+---
+
 ## 1.6 GELİŞTİRME SIRASI — NET (kullanıcı, 2026-08-23)
 
 1. **ÖNCE ÖLÇÜM:** `pozisyon.py`. **Strateji geliştirilmiyor, muhasebe düzeltiliyor.**
@@ -348,7 +371,7 @@ hâlâ 5 şarttır. Kapı, **altyapı** için yeniden tanımlandı.
 | 2 | `panel.py` — HTML arayüz (açık pozisyonlar, equity, işlem defteri) | 2 gün | sırada |
 | — | ⛔ **DURAK: `radar-v2` ön kaydı kapanana kadar İLERLEME YOK** | — | ~30 Ağu tahmini |
 | 3 | **`strateji/`** — eklenti arayüzü: `f(snapshot, portfoy) -> emirler` | 1-2 gün | duraktan SONRA |
-| 4 | **`bot.py`** — pozisyon yöneten döngü (`bot-defter.json`'a YAZAN tek şey) | 2 gün | duraktan sonra |
+| 4 | **`bot.py`** — pozisyon yöneten döngü (`bot-defter.json`'a YAZAN tek şey) + **kaldıraç güvenlik kırpması** | 2 gün | duraktan sonra |
 | 5 | `atolye.py` — config atölyesi + **deneme sayacı** + güven aralıkları | 2 gün | duraktan sonra |
 | 6 | Terfi kapısı (walk-forward + 5 şart) | 1 gün | duraktan sonra |
 
