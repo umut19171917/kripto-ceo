@@ -17,4 +17,7 @@ rem
 rem  Denetim:  Get-ScheduledTaskInfo -TaskName KriptoPerpArsiv
 rem  Kapsama:  venv\Scripts\python.exe perp_arsiv.py --durum
 rem ============================================================
-".\venv\Scripts\python.exe" perp_arsiv.py
+rem Cikti perp-arsiv.log'a yazilir: gorev SESSIZCE basarisiz olursa gorunur
+rem olsun (arsiv 8. ders: "sessiz bozulma en tehlikelisi").
+".\venv\Scripts\python.exe" -u perp_arsiv.py >> "perp-arsiv.log" 2>&1
+echo [%date% %time%] cikis kodu=%ERRORLEVEL% >> "perp-arsiv.log"
