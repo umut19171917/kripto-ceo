@@ -12,6 +12,9 @@ rem  ve izleyici.py dongusunden cagriliyor. Bu AYRI ve BAGIMSIZ.
 rem
 rem  Denetim:  Get-ScheduledTaskInfo -TaskName KriptoArsivYedek
 rem  Durum  :  venv\Scripts\python.exe arsiv_yedek.py --durum
+rem
+rem  ⚠ LOG UTF-8'DIR — Get-Content varsayilan ANSI okur, bozuk GORUNUR.
+rem  Dogru okuma:   Get-Content arsiv-yedek.log -Tail 20 -Encoding utf8
 rem  Kaldir :  Unregister-ScheduledTask -TaskName KriptoArsivYedek
 rem ============================================================
 ".\venv\Scripts\python.exe" -u arsiv_yedek.py >> "arsiv-yedek.log" 2>&1

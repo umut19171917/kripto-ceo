@@ -16,6 +16,11 @@ rem      -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable)
 rem
 rem  Denetim:  Get-ScheduledTaskInfo -TaskName KriptoPerpArsiv
 rem  Kapsama:  venv\Scripts\python.exe perp_arsiv.py --durum
+rem
+rem  ⚠ LOG UTF-8'DIR. PowerShell 5.1'in Get-Content'i VARSAYILAN OLARAK ANSI
+rem  okur ve Turkce karakterler bozuk gorunur (Ã‡ar / Â·). Dosya BOZUK DEGIL.
+rem  Dogru okuma:   Get-Content perp-arsiv.log -Tail 20 -Encoding utf8
+rem  (2026-08-26'da bir kez "bozuk" sanildi; ham baytta C2B7 dogrulandi.)
 rem ============================================================
 rem Cikti perp-arsiv.log'a yazilir: gorev SESSIZCE basarisiz olursa gorunur
 rem olsun (arsiv 8. ders: "sessiz bozulma en tehlikelisi").
