@@ -41,6 +41,10 @@ test-*.json
 
 # Aday testi veri onbellegi (gunluk yeniden uretilir)
 _cache/
+# 30 gunluk uclarin arsivi (perp_arsiv.py). YENIDEN URETILEMEZ — Binance
+# /futures/data/* yalniz ~29 gun geriye gidiyor (olculdu 2026-08-25).
+# Buyuk ve kisisel-olmayan ama depoya girmemeli; yedegi yedek.py'de.
+perp-arsiv/
 .claude/settings.local.json
 # 2026-08-25: desen *.yedek idi, tarih damgali yedekleri (.yedek-20260825-...)
 # KACIRIYORDU -> ayar yedekleri depoya gidecekti. *.yedek* hepsini yakalar.

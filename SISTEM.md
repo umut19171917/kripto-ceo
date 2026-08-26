@@ -587,9 +587,21 @@ iki dönemi tek tabloda toplamayı geçersiz kılan da tam olarak budur.
 
 **Refleks (bağlayıcı):** bir alanla uzun pencere bölmeden önce `git log -S"<alan>"` koştur.
 
-**C — YAN BULGU: `/futures/data/*` UÇLARI 30 GÜNLÜK (kendi ölçümümüz).**
+**C — YAN BULGU: `/futures/data/*` UÇLARI ~30 GÜNLÜK (kendi ölçümümüz).**
 `globalLongShortAccountRatio` · `openInterestHist` · `takerlongshortRatio`:
-**29 gün geriye OK, 32 günde HTTP 400.** `klines` ve `fundingRate` kalıcı.
+**gerçek derinlik 29,6 gün** (ölçüldü 2026-08-26: BTCUSDT 2026-07-27 18:30 →
+2026-08-26 08:10, uç başına 8.500 nokta). `klines` ve `fundingRate` kalıcı.
+
+🔴 **İLK ÖLÇÜMÜM YANLIŞ OKUNMUŞTU — düzeltme (2026-08-26).** 25 Ağustos'ta
+"29 gün geriye OK, 32 günde HTTP 400" yazmıştım. Doğrusu: **bu uçlar `startTime`
+parametresini YOK SAYIYOR.** 2, 10 ve 25 gün öncesi verilen üç ayrı istek
+**aynı pencereyi** döndürdü (2026-08-24 14:35 → 2026-08-26 08:10). "32 günde
+400" ise veri derinliği değil, **parametre doğrulaması** — 30 günü aşan
+`startTime` reddediliyor, o kadar.
+**Sayfalama YALNIZ `endTime` ile geriye doğru yapılır.** İlk `perp_arsiv.py`
+sürümü `startTime` kullandı ve her sembolde yalnız son 500 noktayı (~41 saat)
+aldı; "29 günlük dolgu yapıldı" sanıldı. `endTime` ile yeniden yazıldı, gerçek
+kapsama 29,6 gün çıktı.
 → **`ls_ratio` sonradan çekilemez**, yalnız o an arşivlenirse vardır. §12 madde 7'nin
 (L/S simetrisizliğinin ZARARI) testi, arşivleme başlamadan **hiçbir zaman** yapılamaz.
 Bekleyenler listesi madde **7.1** — acil, dondurulmuş dosyalara dokunmadan yapılabilir.
