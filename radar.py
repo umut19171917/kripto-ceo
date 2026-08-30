@@ -235,6 +235,44 @@ def kurulum_taramasi(durum):
             if kapi == "KAPALI":
                 log(f"[KURULUM] {sym} {p['yon']} skor {skor} bulundu ama kapi KAPALI -> bildirilmedi")
                 continue
+            # ---- RISK TAVANI + COOLDOWN (madde 2.4, 2026-08-30) ------------------
+            # SISTEM.md §12/8: radar'da ikisi de YOKTU. Olculdu: tepe 10 acik
+            # pozisyon, 7'si AYNI YONDE, coinler arasi korelasyon 0,69 -> o yedi
+            # pozisyon yedi ayri bahis DEGIL, tek bahsin yedi kopyasidir.
+            # 🔴 ESIK ICAT EDILMEDI. Ana sicilin zaten yururlukteki degerleri
+            #    kullanildi: defter.COOLDOWN_SAAT (12s) · defter.RISK_TAVANI_PCT
+            #    (2.0) · olcucu.RISK_PCT. Radar'a OZEL bir sayi uydurmak
+            #    "en iyi hucreyi secmek" olurdu; tek dogruluk kaynagi korunuyor.
+            # ⚠ Radar kayitlarinda `risk_pct` alani YOK (459/459 kayit) ->
+            #    defter.acik_risk_pct'nin kendi varsayimi aynen: 1.0.
+            # ⚠ Kapi gecilmezse NE KAYIT NE BILDIRIM gider. Bildirilip
+            #    kaydedilmeyen kurulum, sicili "gercekte gorulen"den ayirir.
+            # ⚠ HATA HALINDE FAIL-OPEN (kaydeder, ama log'a yazar). Gerekce:
+            #    fail-closed bir bug'da radar'i SESSIZCE hic kayit almaz hale
+            #    getirirdi ve olcum tabanini yok ederdi; fazladan bir pozisyon
+            #    ise gorunur ve geri alinabilir. Secim bilincli.
+            try:
+                import defter as _defter
+                _T = radar_defter.tum_kayitlar()
+                _zlar = [datetime.fromisoformat(t["tarih"]) for t in _T if t["token"] == sym]
+                if _zlar:
+                    _yas = (datetime.now(timezone.utc) - max(_zlar)).total_seconds() / 3600
+                    if _yas < _defter.COOLDOWN_SAAT:
+                        log(f"[RADAR-TAVAN] {sym} {p['yon']} atlandi: cooldown "
+                            f"({_yas:.1f}s < {_defter.COOLDOWN_SAAT}s)")
+                        continue
+                _mevcut = sum(t.get("risk_pct", 1.0) for t in _T
+                              if t.get("durum") in ("beklemede", "izleniyor")
+                              and t["yon"] == p["yon"])
+                if _mevcut + olcucu.RISK_PCT > _defter.RISK_TAVANI_PCT + 1e-9:
+                    log(f"[RADAR-TAVAN] {sym} {p['yon']} atlandi: ayni-yon acik risk "
+                        f"%{_mevcut:.1f} + %{olcucu.RISK_PCT:.1f} > tavan "
+                        f"%{_defter.RISK_TAVANI_PCT:.1f}")
+                    continue
+            except Exception as e:
+                log(f"[RADAR-TAVAN] kontrol hatasi (FAIL-OPEN, kayit gecti): "
+                    f"{type(e).__name__}: {str(e)[:70]}")
+            # ----------------------------------------------------------------------
             kald = p.get("ima_kaldirac")
             kald_s = f"\n[!] YUKSEK KALDIRAC ~{kald}x - boyutu elle kis" \
                      if kald and kald > tarayici.KALDIRAC_UYARI else ""
