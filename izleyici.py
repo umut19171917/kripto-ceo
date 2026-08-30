@@ -293,11 +293,35 @@ async def ozet_loop():
                                    f"{len(r['kurulum'])} kurulum adayi - detay: radar.log")
                 except Exception:
                     pass
+                # G4 KIYAS (madde 2.3, 2026-08-30). "Sistem calisiyor mu" sorusu
+                # R toplamiyla CEVAPLANMAZ; ancak AYNI PENCEREDE al-tut ile yan
+                # yana konunca cevaplanir. Iki ay tam bu satir olmadigi icin
+                # kacti (TASARIM-BOT G4).
+                # 🔴 OLGUNUN TEK SAHIBI panel.kiyas() — burasi HESAPLAMAZ, CAGIRIR.
+                #    Ikinci bir yerde hesaplansaydi iki rakam kacinilmaz olarak
+                #    ayrisirdi (bkz. bekleyen-isler madde 8.3).
+                # Hata halinde ozet YINE GIDER (kiyas eksik gider) — bu satir
+                # gunluk ozeti bloke etmemeli.
+                kiyas_s = ""
+                try:
+                    import panel as _panel
+                    _o = _panel.ozet("ana", "Ana Sicil (11 coin)", "kripto-defter.json")
+                    _k, _b = _o.get("kiyas"), _o.get("bakiye")
+                    if _k and _b:
+                        _sis = (_b / 1000 - 1) * 100
+                        kiyas_s = (f"\nkiyas (ayni pencere): sistem %{_sis:+.1f} "
+                                   f"(dusus %{_o.get('dusus') or 0:.1f}) | "
+                                   f"BTC %{_k['btc_pct']:+.1f} "
+                                   f"(dusus %{_k.get('btc_dusus_pct') or 0:.1f})")
+                        if _k.get("sepet_pct") is not None:
+                            kiyas_s += f" | {_k.get('sepet_n', 0)} coin %{_k['sepet_pct']:+.1f}"
+                except Exception as e:
+                    olcucu.log_line(f"[OZET] kiyas alinamadi: {type(e).__name__}: {e}")
                 ok = bildirim.gonder(f"[GUNLUK OZET {gun}]\n"
                                      f"acik {o['acik']} | kapali {o['kapali']} | isabet {isb}\n"
                                      f"gross {o['toplam_R']:+.2f}R | net {o['toplam_net_R']:+.2f}R\n"
                                      f"acik risk: LONG %{rl:.1f} / SHORT %{rs:.1f} (tavan %{defter.RISK_TAVANI_PCT:g})"
-                                     + radar_s)
+                                     + kiyas_s + radar_s)
                 if ok:
                     son_gun = gun
                     olcucu.atomik_yaz(OZET_DURUM_FILE, {"son_ozet_gun": gun})

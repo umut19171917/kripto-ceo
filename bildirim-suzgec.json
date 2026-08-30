@@ -3,7 +3,7 @@
   "_neden": "Sinyallerin al-tutmayi gectigine dair olcum YOK; gecemedigine dair iki aylik olcum VAR (sistem -%9,6 iken BTC +%28,5, sepet +%45,3). Telefona dusen 'su fiyattan al' mesaji bir eylem davetidir. Panelde duran ayni bilgi ise bakildiginda gorulur.",
   "_yururluk": "aktif=false iken HICBIR SEY degismez, tum mesajlar gecer. true yapilinca asagidaki liste uygulanir. ⚠ Calisan izleyici/radar surecleri modulu bellege yuklemistir; bu dosya her gonderimde okunur AMA suzgec KODU ancak surecler yeniden baslayinca devreye girer. Yeniden baslatma: on kayit kapaninca (~2026-08-30).",
   "_gonderim_kaydi": "Susturulan mesaj kaybolmaz: olcucu.log'a '[BILDIRIM] susturuldu' satiri dusuar, tahmin defterine normal sekilde yazilir.",
-  "aktif": false,
+  "aktif": true,
   "gonderilecek": {
     "SINYAL": false,
     "TETIK": false,
