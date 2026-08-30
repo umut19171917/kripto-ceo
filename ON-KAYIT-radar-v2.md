@@ -325,3 +325,89 @@ gerekçelendirmek zorundadır:** *"n=X, sd=Y varsayımıyla ancak Z büyüklüğ
 etkiyi görebilir; aradığımız etki Z'den küçükse bu test onu bulamaz."*
 
 Bu cümle yazılmadan hiçbir ön kayıt dondurulmamalıdır.
+
+---
+
+## SONUÇ — 2026-08-30: **KURAL ÖLDÜ (1/5)**
+
+> ⚠ **Kural (§2), örneklem (§3) ve kill şartları (§4) bu bölüm yazılırken de DEĞİŞMEDİ.**
+> Bu bölüm testin çıktısıdır, sözleşmenin değişikliği değil. Ek 1-4 gibi **eklemedir**;
+> yukarıdaki hiçbir satır silinmedi.
+
+**Örneklem doldu:** 30/30 kapanmış işlem. Girişler 2026-08-19 19:28 → 2026-08-27 09:42,
+son kapanış 2026-08-28 16:13. Ölçüm `onkayit_radar.py`, 2026-08-30'da koşuldu.
+
+```
+toplam net -1.20R | islem basina -0.040R | isabet %33.3
+
+KALDI  1. ort>0 VE bootstrap GA sifiri disliyor   ort -0.040 | GA[-0.504,+0.474]
+GECTI  2. isabet basabasi asiyor                  %33.3 vs %32.5
+KALDI  3. PSR >= %95                              %44.1
+KALDI  4. en iyi 3 cikinca hala pozitif           -0.040 -> -0.274
+KALDI  5. iki yari da pozitif                     ilk 15 +0.419 | son 15 -0.499
+```
+
+**Örneklemin bileşimi (ham sayım, `uygun_islemler()` ile aynı tanım):**
+
+| | |
+|---|---|
+| kapanış biçimi | **stop 20** · tp1 9 · zaman aşımı 1 |
+| kazanan / kaybeden | 10 / 20 |
+| en iyi 3 işlem | üçü de **+2,08R** (hedefin kendisi) |
+| en kötü 3 işlem | üçü de **−1,00R** (temiz stop) |
+| `makro_kapi` | 30/30 **ACIK** — kapı örneklem boyunca hiç ayrım yapmadı |
+| `rejim_durum` | 30/30 **SAKIN** |
+
+### Hüküm — EK 4 madde 5 gereği, iki cümle AYRILAMAZ
+
+1. **"Kural, §4'ün beş şartını geçemedi ve §7 gereği ölmüştür."**
+2. **"Testin gücü, gözlenen dağılımla +0,553R/işlem'dir; bu başarısızlık 'edge yoktur'
+   değil, 'DEVASA edge gösterilememiştir' anlamına gelir."**
+
+⛔ İkinci cümle kuralı **diriltmez**. §7 uygulanır: `G — KAPALI` listesine yazılır,
+**tekrar açılmaz**, tahmin ailesi kesin kapanır. "Test zayıftı, yeniden açalım" **YASAK**
+(EK 4 madde 5). Ölen şey *"büyük edge iddiası"*dır, *"edge ihtimali"* değil.
+
+### EK 2 madde 2 — bahane yolu kapalı, hüküm daha ağır
+
+*"Rejim kötüydü / şanssızdık"* bahanesi **kullanılamaz.** Ve bu vakada zaten
+kullanılamazdı: kural **yalnız LONG** açıyor ve test, LONG için elverişli bir dönemde koştu.
+
+⚠ **Dürüstlük şerhi — bu cümle defterden DEĞİL fiyattan kuruluyor.** Radar defteri
+boğa/ayı damgası taşımıyor; `rejim_durum` alanı oynaklık durumunu (SAKIN/OYNAK) ölçer,
+trendi değil. Dolayısıyla "örneklemin %X'i boğadaydı" diye bir sayım **yapılamaz**.
+Söylenebilecek olan, **pencerenin kendisinin ölçümüdür** (BTCUSDT günlük,
+`fapi/v1/klines`, 2026-08-30'da çekildi):
+
+| | |
+|---|---|
+| BTC, 18 Ağu açılış → 28 Ağu kapanış | **+%22,5** |
+| yükselen gün | 11 günün **8'i** |
+| en sert üç gün | 19 Ağu **+%7,1** · 20 Ağu **+%5,3** · 21 Ağu **+%7,3** |
+
+30 girişin **29'u** 20 Ağustos ve sonrasında açıldı; `rejim.json → trend` alanı
+**boğa** okuyordu (EK 2'de 2026-08-20'de ölçülmüştü, bugün de aynı).
+
+**Sonuç:** LONG kuralı, kendi lehine olan bir rejimde bile geçemedi → EK 2 madde 2 gereği
+hüküm **daha da ağırdır.**
+
+### 5. şart en çok şeyi söylüyor
+
+İlk 15 işlem **+0,419R**, son 15 işlem **−0,499R**. Kural yarı yolda kazanıyordu.
+Ön kaydın varlık sebebi tam olarak budur: 15. işlemde durup *"tuttu"* deseydik, ortalamaya
+geri dönüşü (§5'te önceden yazılmıştı) kendi lehimize yorumlamış olacaktık.
+
+4. şart aynı şeyi başka yerden söylüyor: artının tamamı üç adet hedef vuruşundan geliyor;
+onlar çıkınca ortalama **−0,274R**'ye düşüyor.
+
+### Öncül tahmin tuttu
+
+§5'te *"öncül tahminim: kural düşer"* yazılıydı ve **düştü.** Bu, kaydın kendisini
+doğrular: sonuç sürpriz değil, sınav dürüsttü.
+
+### §7 gereği yapılanlar
+
+- Kural `G — KAPALI` listesine yazıldı (hafıza: `bekleyen-isler-defteri.md`).
+- Tahmin ailesi kapandı — **artık 15 aday / 0 hayatta kalan.**
+- **K3 (gerçek para) bu testle AÇILMADI** (§7, her iki sonuçta da geçerliydi).
+- Dondurulmuş dönem bitti; `radar.py`/`defter.py` üzerindeki çalışma yasağı kalktı.
