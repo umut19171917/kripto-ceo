@@ -273,6 +273,7 @@ async def ozet_loop():
         son_gun = json.loads(OZET_DURUM_FILE.read_text(encoding="utf-8")).get("son_ozet_gun")
     except Exception:
         son_gun = None
+    panel_gun = None          # panel'in ONLINE tazelendigi son gun (madde 2.5)
     while True:
         try:
             now = datetime.now(timezone.utc)
@@ -327,6 +328,37 @@ async def ozet_loop():
                     olcucu.atomik_yaz(OZET_DURUM_FILE, {"son_ozet_gun": gun})
         except Exception as e:
             olcucu.log_line(f"[OZET] hata: {type(e).__name__}: {e}")
+        # ---- PANEL TAZELEME (madde 2.5, 2026-08-30) --------------------------
+        # Panel bugune kadar ELLE calisiyordu; bakilmadigi surece bayat kaliyordu.
+        # Emsal: radar.py her turda radar_defter.rapor_yaz() cagiriyor.
+        #
+        # 🔴 SIKLIK OLCULDU, TAHMIN EDILMEDI (2026-08-30):
+        #     offline=True :  1,2 sn ·  0 ag cagrisi
+        #     offline=False: 41,5 sn · 47 ag cagrisi
+        #   Her turda ONLINE kosmak gunde ~13.500 ek cagri ve tur basina 41 sn
+        #   bloklama demekti -> reddedildi.
+        # KARAR: her tur OFFLINE (defter rakamlari her zaman taze), kiyas icin
+        #   gunde BIR KEZ online. Kiyas al-tut yuzdesidir; gun icinde birkac
+        #   puan oynar, panelin ustundeki hukmu degistirmez.
+        # ⚠ Onbellegi ozet blogunun YAN ETKISINE birakmadim: ozet
+        #   bildirim.aktif() false ise hic kosmaz ve kiyas sonsuza kadar bayatlardi.
+        #   Burada KENDI gun damgasi var (panel_gun), ozetten BAGIMSIZ.
+        # ⚠ panel.py sicillere YAZMAZ (salt okur) — bu cagri veri bozamaz.
+        # ⚠ `gun` yukaridaki try icinde atanir; o try patlarsa TANIMSIZ kalirdi.
+        #   Bu blok ondan BAGIMSIZ olmali -> gunu burada yeniden hesapla.
+        # ⚠ panel modul basinda DEGIL burada import edilir (ozet blogundaki
+        #   `import radar as _radar` deseniyle ayni): calisan surece acilista
+        #   ek yuk/surpriz bindirmez.
+        try:
+            import panel as _panel
+            _gun = datetime.now(timezone.utc).date().isoformat()
+            _online = (panel_gun != _gun)
+            _panel.yaz(offline=not _online)
+            if _online:
+                panel_gun = _gun
+                olcucu.log_line("[PANEL] online tazelendi (kiyas onbellegi guncel)")
+        except Exception as e:
+            olcucu.log_line(f"[PANEL] hata: {type(e).__name__}: {e}")
         # Gunluk Google Drive yedegi (Telegram'dan BAGIMSIZ; idempotent: gunun
         # klasoru varsa is yapmaz -> gunde 1 gercek yedek. Drive kapaliysa sessiz atlar).
         try:
