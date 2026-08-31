@@ -182,3 +182,80 @@ aday hiç düzgün sınanmadı (n=30) — "önceden öldü" diyemeyiz.
 
 `onkayit_topls.py` — **salt okurdur**, canlı hiçbir dosyaya yazmaz, çalışan
 süreçlere dokunmaz. Bu commit'ten **sonra** yazılır, ayrı commit'lenir.
+
+---
+
+# SONUÇ — **POZİSYON KAYMASI DA BİLGİ TAŞIMIYOR** (2026-09-01)
+
+**Örneklem:** 28 sembol · **19.852** saatlik gözlem · 30 takvim günü.
+
+## Ana kol — §6 karar kuralı devreye girdi
+
+```
+  d1 -> 1 saatlik ileri getiri
+  ortalama   +0,063  +0,031  +0,049  +0,080  +0,073   uc fark +0,010%
+  MEDYAN     +0,000  +0,000  +0,000  +0,010  +0,022           +0,022%
+  KIRPILMIS  +0,043  +0,021  +0,022  +0,060  +0,054           +0,012%
+  gun-kumeli GA95  [-0,083%, +0,091%]        rho = +0,600
+```
+
+**GA sıfırı kapsıyor → bilgi yok.** ρ=0,600, eşiğin (0,8) altında.
+
+Ve GA'nın üst sınırı **+0,091%**, ekonomik eşiğin (%0,5) çok altında →
+basis'te olduğu gibi bu **kanıt yokluğu değil, yokluğun kanıtı** (o büyüklükte).
+
+## Sağlamlık kolları aynı yeri gösteriyor — biri daha da sert
+
+| kol | uç fark | GA95 |
+|---|---|---|
+| top-3 çıkarıldı | **−0,048%** (işaret DÖNDÜ) | [−0,137, +0,038] |
+| ilk yarı | −0,018% | [−0,073, +0,036] |
+| ikinci yarı | −0,017% | [−0,210, +0,140] |
+
+🔴 **Top-3 çıkarılınca uç farkın işaretinin dönmesi belirleyici:** ana koldaki
++0,010%'luk fark birkaç sembolde yoğunlaşmış gürültüydü, düzenlilik değil.
+
+## §5'in "ölçülemedi" hükmü aynen uygulandı
+
+Seviye kolu (`top_ls`) **sonucu görülmeden** güçsüz ilan edilmişti
+(sembol başına 1,7 bağımsız gözlem → `n_eff ≈ 4`). Koşumda uç farkı +0,057%
+çıktı ve GA'sı [−0,020%, +0,136%] oldu. **Bu sayılar hüküm doğurmaz** —
+ön kayıt bunu peşinen yazmıştı. **Seviye hâlâ ÖLÇÜLMEMİŞTİR.**
+
+## 8 saatlik kol — en büyük nokta tahmini, ama bulgu değil
+
+Uç fark **+0,380%** (şimdiye kadarki en büyük), ama GA [−0,296%, +1,075%]
+sıfırı kapsıyor ve bantlar monotonik değil (ρ=0,600; ortada çukur var).
+§6'nın ilk satırının **üç şartından ikisi** karşılanmıyor. Bulgu değildir.
+
+## ⚠ GÜÇ HESABI ÖNGÖRÜLENDEN İYİ ÇIKTI — dürüstlük kaydı
+
+§5 saptanabilir en küçük farkı **%0,29** öngörmüştü; gerçekleşen GA
+yarı-genişliği **%0,087** — yaklaşık **3,3 kat dar**. İki açıklama var ve
+**ayrıştıramıyorum**:
+1. "2,5 etkin bağımsız sembol" varsayımım fazla muhafazakârdı, ya da
+2. gün-kümeli bootstrap **yalnız 30 blokla** belirsizliği olduğundan az gösteriyor.
+
+⚠ **Muhafazakâr okuma seçiliyor:** saptama tabanı olarak §5'in **%0,29**
+rakamı kullanılır. Hüküm iki okumada da aynı: %0,5'lik bir etki yok.
+
+## 🔴 BU ADAYIN DURUMU
+
+| biçim | hüküm |
+|---|---|
+| **1 saatlik kayma (`d1`)** | ❌ **ÖLÇÜLDÜ, BİLGİ YOK** — yeterince güçlü test |
+| 8 saatlik kayma | ❌ GA sıfırı kapsıyor, monotonluk yok |
+| **seviye (`top_ls`)** | ⚠ **HÂLÂ ÖLÇÜLMEDİ** — yıllarca arşiv ister, ölü DEĞİL |
+
+📌 **Sayım düzeltmesi:** `top_ls` bu sabah ölü listesinden **çıkarılmıştı**
+(yanlış sınıflanmıştı, n=30 ile "ölçülemedi"ydi). Şimdi **gerçek bir gerekçeyle**
+geri giriyor — ama yalnız **kayma biçimiyle**. Seviye biçimi listede değildir.
+
+## Sıradaki
+
+Arşivleme **sürüyor** (günlük, ücretsiz): seviye biçimi ancak yıllarca birikimle
+sınanabilir, önceliği düşük ama kapı açık tutuluyor.
+
+**Bant dışı gerçek aday hâlâ emir defteri derinliği** — §7'de koşumdan önce
+yazıldığı gibi: *"top_ls de sonuçta aynı banttan (gerçekleşmiş pozisyonlanma);
+emir defteri ise NİYET ölçer."* Verisi 2026-08-31'den beri toplanıyor.
