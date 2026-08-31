@@ -231,8 +231,11 @@ def main():
             hatali.append((sym, f"{type(e).__name__}: {str(e)[:60]}"))
         time.sleep(ARA_SN)
     sn = time.time() - bas
-    # log_line KONSOLA DA yazar (olcucu.py:400) -> ayrica print ETME, log ikilenir
-    olcucu.log_line(f"[DERINLIK] {yazan}/{len(syms)} sembol, "
+    # log_line KONSOLA DA yazar (olcucu.py:400) -> ayrica print ETME, log ikilenir.
+    # Zaman damgasi SART: gunde 144 tur kosuyor, damgasiz log'da "kac tur atlandi"
+    # sorusu cevaplanamaz (sessiz bozulma en tehlikelisi — arsiv 8. ders).
+    damga = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    olcucu.log_line(f"[{damga}] [DERINLIK] {yazan}/{len(syms)} sembol, "
                     f"{len(hatali)} hata, {sn:.0f}sn")
     if hatali:
         for s, e in hatali[:5]:
