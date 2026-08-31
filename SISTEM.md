@@ -667,6 +667,40 @@ taşımadığını **iki bağımsız yöntemle** gösterdi, B1'de son filtre ada
    sekiz madde tek kararla kapanır: skor tabanı 70→75 · L/S bileşeni · korelasyon
    histerezisi · OYNAK'ta-LONG-yok · trend filtresi · funding+trend kombosu ·
    likidasyonun skora katkısı · skor ağırlıkları validasyonu.
+
+   🔴🔴 **ÖLÇÜLDÜ — 2026-08-31. `ON-KAYIT-skor-yonu.md` (ön kayıt `64fb19e`,
+   araç `c0456ee`, sonuç `b01d493`). HÜKÜM: İŞARET TERS, 1/4.**
+
+   Skorun ileri getiriyle ilişkisi **ilk kez doğrudan** ölçüldü — daha önce her
+   ölçümde skor *veri* olarak kullanılmıştı, *sınanacak iddia* olarak değil.
+   Kaynak: `olcucu.log`'un fiilen hesaplanmış skorları (yeniden kurulum YOK →
+   eşik geçmişi / ileriye bakma sorunu yok). 65 gün · 11 sembol · 12.913 gözlem.
+
+   | LS bandı | n | ort +24s getiri |
+   |---|---|---|
+   | [0,20) | 589 | **−1,615%** |
+   | [20,40) | 2.729 | −0,245% |
+   | [40,60) | 5.167 | +0,018% |
+   | [60,80) | 4.096 | +0,259% |
+   | [80,100] | 332 | **+0,441%** |
+
+   **Spearman ρ = +1,000** — beş bandın beşinde düzenli. Skor *"LONG sıkışması
+   var, SHORT'la"* dedikçe fiyat ertesi 24 saatte **daha çok yükseliyor**.
+   S1 kaldı (ρ=+1,000 vs gereken ≤−0,75) · S2 kaldı (%42 vs ≥%60) ·
+   S3 kaldı (p=0,9715) · S4 geçti.
+
+   ⚠ **Kapsam (post-hoc):** tersleşme **boğa ürünü DEĞİL** — boğa öncesi 54
+   günde **en güçlü** (+0,392%, ρ=+1,000); boğada sıfıra yakın (11 gün, hüküm yok).
+   ⚠ **Dürüstlük:** S4 *işaret* olarak geçti ama büyüklük +0,318% → +0,073%
+   düştü ve o değer testin **kendi görülebilirlik tabanının (%0,489) altında**.
+   **Yön güvenilir, büyüklük gösterilemez.** En sağlam parça monotonluk.
+
+   ⛔ **"Skoru tersine çevir" DEMEK DEĞİLDİR** — bu **ham sinyal** aşamasıdır;
+   mekanik ve maliyet aşamaları yapılmadan kural değişikliği çıkarılamaz.
+
+   📌 **Bu maddenin cevabı artık ölçülü bir dayanağa sahip.** Alt sekiz maddenin
+   (skor tabanı · L/S bileşeni · ağırlık validasyonu …) **önceliği düştü**:
+   bütünün yönü tersken bileşen ince ayarı ikincil bir sorudur.
 2. ❌ **Makro kapısı DIKKAT'te kapansın mı? — DÜŞTÜ (2026-08-18, §9.9).** Etiket
    permütasyonu: ana sicil p=0,695 · radar p=0,021 · Fisher birleşik p=0,073.
    ~16 kırılım incelendiğinden tek anlamlı sonuç çoklu-karşılaştırmayla açıklanabilir.
