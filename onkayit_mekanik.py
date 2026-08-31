@@ -114,34 +114,38 @@ def simule(r, bars):
             break
     if tetik is None:
         return {"durum": "tetiklenmedi", "net_R": 0.0, "giris": giris,
-                "stop_pct": risk / giris * 100}
+                "stop_pct": risk / giris * 100,
+                "tetik_ts": None, "cikis_ts": None}
 
     # --- cozum (120s) ---
-    sonuc, cikis = "zaman_asimi", None
+    sonuc, cikis, cikis_j = "zaman_asimi", None, None
     for j in range(tetik, min(tetik + ACTIVE, len(bars))):
         b = bars[j]
         vurdu_stop = b["h"] >= stop
         vurdu_tp2 = b["l"] <= tp2
         vurdu_tp1 = b["l"] <= tp1
         if vurdu_stop:                       # TEMKINLI: stop oncelikli
-            sonuc, cikis = "stop", stop
+            sonuc, cikis, cikis_j = "stop", stop, j
             break
         if vurdu_tp2:
-            sonuc, cikis = "tp2", tp2
+            sonuc, cikis, cikis_j = "tp2", tp2, j
             break
         if vurdu_tp1:
-            sonuc, cikis = "tp1", tp1
+            sonuc, cikis, cikis_j = "tp1", tp1, j
             break
     ufuk_son = min(tetik + ACTIVE, len(bars)) - 1
     if cikis is None:
-        cikis = bars[ufuk_son]["c"]
+        cikis, cikis_j = bars[ufuk_son]["c"], ufuk_son
 
     brut_R = (giris - cikis) / risk
     mal = defter.maliyet_R({"giris": giris, "stop": stop, "yon": "SHORT"})
     # stop kaldirilsaydi ufuk sonunda ne olurdu (7.2'nin ASIL sorusu)
     ufukta = (giris - bars[ufuk_son]["c"]) / risk - mal
     return {"durum": sonuc, "net_R": brut_R - mal, "ufuk_R": ufukta,
-            "giris": giris, "stop_pct": risk / giris * 100}
+            "giris": giris, "stop_pct": risk / giris * 100,
+            # portfoy asamasi (B3) icin: eszamanli maruziyet ancak zamanla bilinir.
+            # B2'nin RAPORLADIGI niceliklerin HICBIRINI degistirmez (yalniz ek alan).
+            "tetik_ts": bars[tetik]["t"], "cikis_ts": bars[cikis_j]["t"]}
 
 
 def ga_gun(degerler_gun, tur=4000):
