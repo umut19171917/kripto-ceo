@@ -22,6 +22,26 @@ KAPATTIĞI BORÇLAR
                        satırı eklenir, eski değer SİLİNMEZ (aşağıya bak).
 
 --------------------------------------------------------------------------------
+🔴 SAHİPLİK HARİTASI (madde 8.3) — YENİ ARAÇ YAZMADAN ÖNCE BURAYA BAK
+--------------------------------------------------------------------------------
+Denetlendi 2026-09-01: canlı modüllerde HİÇBİR hesabın iki sahibi yok.
+Yeni bir ölçüm aracı bunları YENİDEN YAZMAZ, buradan çağırır:
+
+    bileşik bakiye / düşüş / getiri eğrisi ...... `panel._bilesik`
+    R listesi (sicilden) ......................... `panel._R_listesi`
+    al-tut kıyası ................................ `panel.kiyas`
+    PSR ve dağılım ölçütleri ..................... `metrikler.psr`
+    ATR ve fiyat matematiği ...................... `olcucu.atr`
+    işlem maliyeti (R cinsinden) ................. `defter.maliyet_R`
+    USD muhasebesi + likidasyon .................. `pozisyon.muhasebe`
+    mutabakat denklemi ........................... `pozisyon.mutabakat`
+    bantlama · bootstrap · permütasyon · hüküm ... **bu modül**
+
+⚠ `onkayit_*.py` araçları bu kuralın DIŞINDADIR: her biri bir hükme bağlı
+donmuş bir enstantanedir ve sonradan düzenlenmez. İçlerindeki kopya kodu
+"düzeltmek" hükmü geçersiz kılar.
+
+--------------------------------------------------------------------------------
 🔴 EŞİKLER — TEK KAYNAK (madde 8.3: her olgunun TEK sahibi)
 --------------------------------------------------------------------------------
 Bu sayılar ön kayıtlarda tekrar tekrar yazılıyordu; artık buradan okunur.
