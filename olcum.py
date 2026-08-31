@@ -141,9 +141,19 @@ def gun_ici_permutasyon(G, bant=5, tur=TUR_PERMUTASYON):
     Etiketler her takvim günü İÇİNDE karıştırılır -> gün yapısı ve piyasa
     geneli hareket KORUNUR, yalnız BAĞ kırılır.
 
-    ⚠ SINIR: gün içi karıştırma gün içi otokorelasyonu korumaz. Öngörücü
-    gün içinde yavaşsa sıfır dağılımı FAZLA DAR çıkar ve p'yi küçük gösterir.
-    Yavaş öngörücülerde (τ >> 1 gün) bu p hüküm doğurmaz.
+    🔴 SINIR — 2026-09-01 denetiminde ÖLÇÜLDÜ, varsayım değil:
+
+    | durum | hangi yöntem güvenilir |
+    |---|---|
+    | ufuk ≈ örnekleme aralığı (örtüşme yok) | ikisi de; uyuşmaları gerçek kontrol |
+    | **ufuk >> örnekleme aralığı** | **bootstrap**; permütasyon FAZLA DAR |
+    | **öngörücü çok yavaş (τ >> 1 gün)** | **bootstrap**; permütasyon FAZLA DAR |
+
+    Ölçülen örnek: `basis` (ufuk 24s, örnekleme 1s -> ardışık 24 gözlem
+    neredeyse aynı ileri pencereyi paylaşıyor) permütasyon bootstrap'tan
+    **7 kat dar** çıktı (0,13x). `topls` (ufuk 1s = örnekleme) **0,86x** —
+    yani orada iki yöntem uyuştu. Bu yüzden permütasyon evrensel bir
+    yükseltme DEĞİLDİR; ikisi BİRLİKTE okunur, çelişirse muhafazakâr olan alınır.
 
     Döner: (p, gozlenen_fark, sifir_dagiliminin_sd'si)
     """

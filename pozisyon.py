@@ -509,8 +509,54 @@ def mark_to_market(p, fiyat):
 # ==============================================================================
 #  PORTFOY
 # ==============================================================================
+def mutabakat(kapali, tolerans=0.01):
+    """🔴 MUTABAKAT DENKLEMI (madde 7.5) — bir P&L toplami basilmadan ONCE kosar.
+
+        Σ net = Σ brut − Σ komisyon + Σ funding
+
+    Dis proje dersi: dogru yontem KURUS sapar, yanlis yontem BINLERCE dolar.
+    Bu denklem olmadan yanlis toplama sessizce dogru gorunur.
+
+    ⚠ LIKIDASYON MESRU BIR ISTISNADIR: `muhasebe()` likidasyonda
+    `net = max(net, -(teminat + komisyon))` kirpmasi uygular; kirpilan pozisyonda
+    ozdeslik BOZULUR ve bu bir hata DEGILDIR. Denklem onlari AYRI sayar ve
+    raporlar — gizlemez, hataya da saymaz. Gizlenirse denklemin kendisi yalan
+    soylemeye baslar.
+
+    Doner: {"tamam": bool, "fark": float, "kirpilmis": int, ...}
+    """
+    brut = sum(p.get("pnl_brut_usd") or 0 for p in kapali)
+    kom = sum(p.get("komisyon_usd") or 0 for p in kapali)
+    fund = sum(p.get("funding_toplam_usd") or 0 for p in kapali)
+    net = sum(p.get("pnl_net_usd") or 0 for p in kapali)
+
+    # kirpma etkisi: yalniz likidasyonlarda ve yalniz kirpma GERCEKTEN devreye
+    # girdiyse. Beklenen net ile saklanan net arasindaki fark kirpmanin miktaridir.
+    kirpma, kirpilmis = 0.0, 0
+    for p in kapali:
+        if p.get("durum") != "likidasyon":
+            continue
+        bek = ((p.get("pnl_brut_usd") or 0) - (p.get("komisyon_usd") or 0)
+               + (p.get("funding_toplam_usd") or 0))
+        gercek = p.get("pnl_net_usd") or 0
+        if abs(gercek - bek) > 1e-6:
+            kirpma += gercek - bek
+            kirpilmis += 1
+
+    beklenen = brut - kom + fund + kirpma
+    fark = net - beklenen
+    return {"tamam": abs(fark) <= tolerans, "fark": round(fark, 6),
+            "brut": round(brut, 4), "komisyon": round(kom, 4),
+            "funding": round(fund, 4), "net": round(net, 4),
+            "kirpma_usd": round(kirpma, 4), "kirpilmis_pozisyon": kirpilmis,
+            "n": len(kapali)}
+
+
 def portfoy_ozet(pozisyonlar, bakiye=VARSAYILAN_BAKIYE):
-    """Spot ve vadeli AYRI, toplam risk BIRLESIK (TASARIM-BOT §5)."""
+    """Spot ve vadeli AYRI, toplam risk BIRLESIK (TASARIM-BOT §5).
+
+    🔴 Ciktida `mutabakat` alani ZORUNLUDUR (madde 7.5): bu ozet bir P&L
+    toplamidir ve denklem kosmadan doner degeri yayimlanmamalidir."""
     acik = [p for p in pozisyonlar if p["durum"] in ACIK_DURUMLAR]
     kapali = [p for p in pozisyonlar if p["durum"] in KAPALI_DURUMLAR]
     o = {"bakiye_baslangic": bakiye, "acik": len(acik), "kapali": len(kapali)}
@@ -532,6 +578,11 @@ def portfoy_ozet(pozisyonlar, bakiye=VARSAYILAN_BAKIYE):
             sum(p["risk_pct"] for p in izlenen if p["yon"] == yon), 2)
     o["risk_tavani_pct"] = defter.RISK_TAVANI_PCT
     o["teminat_bagli_usd"] = round(sum(p["teminat"] for p in izlenen), 2)
+    o["mutabakat"] = mutabakat(kapali)          # madde 7.5 — atlanamaz
+    if not o["mutabakat"]["tamam"]:
+        olcucu.log_line(
+            f"[MUTABAKAT] 🔴 DENKLEM TUTMADI: fark {o['mutabakat']['fark']:+.6f} $ "
+            f"(n={o['mutabakat']['n']}). P&L toplami SUPHELIDIR.")
     return o
 
 
