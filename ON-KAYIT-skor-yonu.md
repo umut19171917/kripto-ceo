@@ -175,3 +175,80 @@ olur ve §2'nin sıfır-serbestlik-derecesi gerekçesini yok eder.
 `onkayit_skor.py` — log'u akıtarak okur, seyreltir, +24s getiriyi eşler,
 S1-S4'ü **sırayla** değerlendirir. Salt okurdur. Ön kayıt commit'inden
 **sonra** yazılır ve ayrı commit'lenir.
+
+---
+
+# 🔴 SONUÇ — **İŞARET TERS** (2026-08-31, koşum `c0456ee`)
+
+Ölçütler donduruldu (`64fb19e`), araç sonra yazıldı (`c0456ee`), sonuç budur.
+
+## Birincil kol — LS ≥ 70 (SHORT sinyali)
+
+```
+bant           n        ort +24s getiri
+[  0, 20)     589            -1,615%
+[ 20, 40)   2,729            -0,245%
+[ 40, 60)   5,167            +0,018%
+[ 60, 80)   4,096            +0,259%
+[ 80,101)     332            +0,441%
+```
+
+| # | şart | eşik | sonuç | |
+|---|---|---|---|---|
+| S1 | monotonluk | ρ ≤ −0,75 | **ρ = +1,000** | 🔴 KALDI |
+| S2 | beklenen işarette gün | ≥ %60 | **%42** (27/64) | 🔴 KALDI |
+| S3 | gün-içi permütasyon | p ≤ 0,05 | **p = 0,9715** | 🔴 KALDI |
+| S4 | top-3 sembol çıkınca işaret | aynı | +0,318% → +0,073% | ✅ GEÇTİ |
+
+**HÜKÜM: 1/4 — İŞARET TERS.** Skor "LONG sıkışması var, SHORT'la" dedikçe
+fiyat ertesi 24 saatte **daha çok yükseliyor**, ve bu **beş bandın beşinde de**
+düzenli (ρ = +1,000; rastgele sıralamada olasılığı 1/120 ≈ 0,008).
+
+## Ne söylüyor, ne söylemiyor
+
+✅ **Söylediği:** sistemin tek pozitif seçicisi, kendi eşiğinde (`SQUEEZE_FLAG=70`),
+65 günlük pencerede **ters yönde** sıralıyor. Monotonluk en sağlam parça —
+eşiğe de, birkaç sembole de bağlı değil (bant başına n = 589…5.167).
+
+🔴 **Söylemediği — MAGNİTÜD İDDİASI KIRILGAN:** S4 *işaret* olarak geçti ama
+büyüklük **+0,318% → +0,073%** düştü (%77). Ve **+0,073%, bu testin kendi
+görebilirlik tabanının (%0,489) ALTINDA.** Yani: *yön* güvenilir, *etkinin
+büyüklüğü* bu testle gösterilemez. İkisini ayırmayan bir cümle yanlıştır.
+
+⛔ **"Skoru tersine çevir" DEMEK DEĞİLDİR.** Bu **ham sinyal** aşamasıdır.
+Mekanik (stop/hedef) ve maliyet (komisyon/slipaj/funding) aşamaları
+yapılmadan hiçbir kural değişikliği çıkarılamaz — projenin kendi sırası
+budur (bekleyen-isler 7.2).
+
+## Kapsam — post-hoc, hükmü değiştirmez
+
+Ön kayıtta rejim ayrımı kill şartı **değildi**; aşağısı hükmün *sınırını*
+yazmak içindir, ondan kaçmak için değil.
+
+| dönem | gün | karşıtlık | ρ |
+|---|---|---|---|
+| tüm pencere | 65 | +0,318% | +1,000 |
+| **boğa ÖNCESİ (<08-20)** | **54** | **+0,392%** | **+1,000** |
+| boğa (≥08-20) | 11 | −0,037% | −0,400 |
+
+🔴 **Tersleşme boğa ürünü DEĞİL** — aksine, sistemin işinin çoğunu yaptığı
+boğa-öncesi 54 günde **en güçlü**. Boğada sıfıra yakın, ama n=11 gün, hüküm
+yok. *"Rejim kötüydü"* savunması bu tabloyla kullanılamaz.
+
+## İkincil kol — SS ≥ 70 (LONG sinyali): hüküm YOK
+
+n=85, 20 gün. Karşıtlık −0,804%, ρ=−0,400, p=0,116. §5 gereği bu kol
+**%1,93'ün altını göremez** → hiçbir karara gerekçe olamaz. Kayda geçer.
+
+## Beklenti tuttu — ama bu ek kanıt değildir
+
+§6'da *"S1 kalır, işaret muhtemelen TERS çıkar"* yazılmıştı ve öyle oldu.
+Bu, **öncüllerin sağlam olduğunu** gösterir; bulgunun gücünü artırmaz.
+Kanıt verinin kendisidir.
+
+## Bağlandığı yer
+
+`SISTEM.md` §12 madde 1 — *"Sıkışma skoru korunacak mı? Diğer her şey buna
+bağlı."* Cevap artık ölçülü bir dayanağa sahip. Ve bileşen ayarı maddeleri
+(3.2 funding · 3.3 L/S) **anlamsızlaşmadı ama önceliği düştü**: bütünün
+yönü tersken bileşen ince ayarı ikincil bir sorudur.
