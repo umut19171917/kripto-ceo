@@ -74,8 +74,19 @@ def main():
             print(f"  sonraki olay: {t['sonraki']} (~{t.get('saat_kala')} saat sonra)")
         pr = mk.get("piyasa_rejimi")
         if pr and pr.get("durum"):
-            print(f"  piyasa rejimi: {pr['durum']} (vol x{pr.get('vol_orani')}, "
-                  f"korelasyon {pr.get('korelasyon')}, trend {pr.get('trend')})")
+            # 🔴 Madde 5.1 (2026-09-01): eskiden tek satirdi ve basligi "piyasa
+            # rejimi: SAKIN" idi. SAKIN/OYNAK yalnizca OYNAKLIK olcer, yon DEGIL —
+            # ama baslik onu genel piyasa durumu gibi okutuyordu ve belgelerde
+            # defalarca YON gibi yorumlandi ("dusen/testere rejim"), iki ay yorumu
+            # kaydirdi. Yon etiketi (`trend`) 2026-06-28'den beri VARDI, eksik olan
+            # ETIKET DEGIL GORUNURLUKTU: parantez icinde, en sonda duruyordu.
+            # Cozum: ikisi AYRI SATIR ve esit agirlikta; karistirilamaz.
+            print(f"  oynaklik : {pr['durum']}  (vol x{pr.get('vol_orani')}, "
+                  f"korelasyon {pr.get('korelasyon')})")
+            yon = pr.get("trend")
+            if yon:
+                print(f"  YON      : {str(yon).upper()}   <- fiyat yonu; "
+                      f"yukaridaki SAKIN/OYNAK yon DEGIL, oynaklik olcer")
         for n in mk.get("notlar", []):
             print(f"  - {n}")
 
