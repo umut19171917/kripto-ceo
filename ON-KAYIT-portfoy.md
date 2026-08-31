@@ -131,3 +131,80 @@ azaltmaz.
 `onkayit_portfoy.py` — `onkayit_mekanik.simule()`'yi çağırır, tavanı
 kronolojik uygular, kasayı bileşikler, kıstası aynı mumlardan hesaplar.
 Salt okurdur. Ön kayıt commit'inden **sonra** yazılır, ayrı commit'lenir.
+
+---
+
+# SONUÇ — **G4 GEÇMEDİ; zincir kapandı** (2026-08-31)
+
+```
+1. acilan islem   :  27   (456 sinyalden; tavan + tetik suzgeci)
+2. son bakiye     :   895,74 $   en derin dusus  -13,7%
+3. BTC al-tut     :  1302,37 $   en derin dusus   -6,4%
+   11-coin sepeti :  1274,50 $   en derin dusus  -23,2%
+4. G4 HUKMU       : getiri GECMEDI · dusus DAHA COK  ->  GECMEDI
+5. gun-bloklu %95 : [784,41 $ , 1037,02 $]     (tek yol 895,74 $)
+6. saglamlik      : top-3 cikinca 900,95 $ / -13,8%  (yok denecek fark)
+7. TAVANIN ETKISI : tavanLI 27 islem 895,74 $ / -13,7%
+                    tavanSIZ 150 islem 604,63 $ / -40,0%   -> tavan +291,12 $
+```
+
+## 🔴 Beklentim ÇÜRÜDÜ — düşüş tarafında
+
+§6'da *"düşüş al-tuttan küçük çıkabilir"* yazmıştım. **Çıkmadı:**
+strateji **−%13,7**, BTC **−%6,4**. Yani strateji hem daha az kazandırdı
+hem **iki kat derin** düşüş yaşattı. (Sepete göre düşüş daha sığ —
+−%13,7 vs −%23,2 — ama G4'ün kıstası BTC.)
+
+G4'ün iki koşulu birden gerekiyordu; **ikisi de sağlanmadı.**
+
+## Üç aşama birbirini doğruluyor
+
+| aşama | bulgu |
+|---|---|
+| **B1** ham sinyal | LS ↑ → fiyat ↑ (**ρ = +1,000**) |
+| **B2** mekanik | −0,327R/işlem, GA sıfırı dışlıyor |
+| **B3** portföy | **−%10,4** vs BTC **+%30,2**, düşüş 2 kat derin |
+
+Üç bağımsız ölçüm, tek sonuç: **bu sinyal ailesi ters yönde çalışıyor ve
+paraya da öyle dönüşüyor.**
+
+## ⭐ Bağımsız doğrulama — simülasyon canlıyla örtüşüyor
+
+Simüle edilen kasa **−%10,4**. Canlı sistemin panelde ölçülen gerçek sonucu
+(2026-08-30) **−%13,8**. Farklı veri yolu, farklı hesap, **aynı cevap**.
+Bu, simülasyonun gerçeği tarif ettiğinin bağımsız kanıtıdır — ve aynı
+zamanda canlı sicilin bu ölçümle tutarlı olduğunun.
+
+## İki "kazara koruma" nicelendi
+
+1. **Kırılım girişi** sinyallerin **%67'sini** eliyor (B2): fiyat yükseliyorsa
+   SHORT hiç açılmıyor.
+2. **Risk tavanı** kalanın **%80,7'sini** eliyor ve **+291,12 $** kurtarıyor;
+   düşüşü **−%40 → −%13,7**'ye indiriyor.
+
+⚠ İkisi de **tasarlanmış koruma değil**. Tavan korelasyon için kondu, kırılım
+girişi işlem mantığı gereği var. Ters bir sinyali frenlemeleri **yan etki**.
+Ama etkileri büyük: bu iki fren olmasaydı kasa 604 $ ve −%40 düşüşte olurdu.
+
+## Sağlamlık
+
+Top-3 sembol çıkarılınca sonuç **neredeyse aynı** (900,95 $ vs 895,74 $).
+Kayıp birkaç sembolden gelmiyor — **yaygın**. Bu, B2'deki zayıflığın
+(orada büyüklük top-3'e duyarlıydı) portföy düzeyinde **olmadığını** gösterir.
+
+## Bootstrap
+
+Gün-bloklu %95 aralık **[784 $, 1037 $]**. Yani bu stratejinin *şanslı*
+versiyonu bile ancak başabaş; BTC'nin 1302 $'ına hiçbir kolda yaklaşmıyor.
+
+## Ne çıkar, ne çıkmaz
+
+✅ **Çıkar:** *ham → mekanik → portföy* zinciri bu sinyal ailesi için
+**kapandı**. Üç aşamanın üçü de olumsuz ve birbirini doğruluyor.
+✅ **Çıkar:** iki frenin (kırılım girişi, risk tavanı) koruyucu etkisi
+nicel olarak biliniyor.
+
+⛔ **Çıkmaz:** *"skoru tersine çevir"* — LONG kolu (SS) hiç güçlendirilmiş
+ölçülmedi (n=85) ve ters çevirmek onu üretir.
+⛔ **Çıkmaz:** *"tavanı/stopu şu yapalım"* — hiçbir parametre taranmadı.
+⛔ **Çıkmaz:** diğer 14 adayın hükmü — bu zincir **tek aile** ölçtü.
