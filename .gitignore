@@ -54,3 +54,8 @@ arsiv-yedek.log
 
 # Obsidian ayar klasoru (kisisel, kod degil)
 .obsidian/
+
+# 2026-08-31: emir defteri derinliginin ILERI arsivi (derinlik_arsiv.py).
+# GECMISI YOK — /fapi/v1/depth yalniz anlik doner. Kosulmazsa o an KALICI kayip.
+derinlik-arsiv/
+derinlik-arsiv.log
