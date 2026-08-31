@@ -79,6 +79,16 @@ MAX_GUN_ALARM = 20         # gunluk kuresel hareket-alarmi tavani (spam sigortas
 KURULUM_SEC = 2 * 3600     # 2 saatte bir (1h zaman diliminde kurulumlar yavas degisir)
 KURULUM_TEKRAR_SAAT = 12   # ayni coin+yon icin bildirim araligi (canli COOLDOWN ile ayni)
 
+# ---- risk tavani + cooldown kapisi (madde 2.4) ----
+# 🔴 2026-08-31: KAPALI. Neden bayrak var — "radar.py'yi yeniden baslatmiyorum"
+# bir uretim kapisi DEGILMIS: radar kendi kendine yeniden basliyor (3 gunde 5
+# [BASLA]), 2026-08-30 21:24'teki baslatma commit'li kodu canliya aldi ve tavan
+# 23:28'de calismaya basladi. ON-KAYIT-radar-tavan.md §7 bunu pesinen
+# gecersizlik sarti saymisti -> 1. kurulum IPTAL (19 aday B kolundan kayip).
+# Test SIMULASYONLA kosar: defter TAM kalmali, kapi canlida SUZMEMELI.
+# Bunu True yapmak = kosan on kaydi ikinci kez gecersiz kilmak.
+TAVAN_CANLI = False
+
 # ---- duyuru nobetcisi ----
 DUYURU_SEC = 6 * 3600      # Binance resmi duyurulari 6 saatte bir kontrol et
 DUYURU_URL = "https://www.binance.com/bapi/composite/v1/public/cms/article/list/query"
@@ -252,23 +262,24 @@ def kurulum_taramasi(durum):
             #    getirirdi ve olcum tabanini yok ederdi; fazladan bir pozisyon
             #    ise gorunur ve geri alinabilir. Secim bilincli.
             try:
-                import defter as _defter
-                _T = radar_defter.tum_kayitlar()
-                _zlar = [datetime.fromisoformat(t["tarih"]) for t in _T if t["token"] == sym]
-                if _zlar:
-                    _yas = (datetime.now(timezone.utc) - max(_zlar)).total_seconds() / 3600
-                    if _yas < _defter.COOLDOWN_SAAT:
-                        log(f"[RADAR-TAVAN] {sym} {p['yon']} atlandi: cooldown "
-                            f"({_yas:.1f}s < {_defter.COOLDOWN_SAAT}s)")
+                if TAVAN_CANLI:
+                    import defter as _defter
+                    _T = radar_defter.tum_kayitlar()
+                    _zlar = [datetime.fromisoformat(t["tarih"]) for t in _T if t["token"] == sym]
+                    if _zlar:
+                        _yas = (datetime.now(timezone.utc) - max(_zlar)).total_seconds() / 3600
+                        if _yas < _defter.COOLDOWN_SAAT:
+                            log(f"[RADAR-TAVAN] {sym} {p['yon']} atlandi: cooldown "
+                                f"({_yas:.1f}s < {_defter.COOLDOWN_SAAT}s)")
+                            continue
+                    _mevcut = sum(t.get("risk_pct", 1.0) for t in _T
+                                  if t.get("durum") in ("beklemede", "izleniyor")
+                                  and t["yon"] == p["yon"])
+                    if _mevcut + olcucu.RISK_PCT > _defter.RISK_TAVANI_PCT + 1e-9:
+                        log(f"[RADAR-TAVAN] {sym} {p['yon']} atlandi: ayni-yon acik risk "
+                            f"%{_mevcut:.1f} + %{olcucu.RISK_PCT:.1f} > tavan "
+                            f"%{_defter.RISK_TAVANI_PCT:.1f}")
                         continue
-                _mevcut = sum(t.get("risk_pct", 1.0) for t in _T
-                              if t.get("durum") in ("beklemede", "izleniyor")
-                              and t["yon"] == p["yon"])
-                if _mevcut + olcucu.RISK_PCT > _defter.RISK_TAVANI_PCT + 1e-9:
-                    log(f"[RADAR-TAVAN] {sym} {p['yon']} atlandi: ayni-yon acik risk "
-                        f"%{_mevcut:.1f} + %{olcucu.RISK_PCT:.1f} > tavan "
-                        f"%{_defter.RISK_TAVANI_PCT:.1f}")
-                    continue
             except Exception as e:
                 log(f"[RADAR-TAVAN] kontrol hatasi (FAIL-OPEN, kayit gecti): "
                     f"{type(e).__name__}: {str(e)[:70]}")
