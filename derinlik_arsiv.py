@@ -206,10 +206,35 @@ def durum():
     print("-" * 72)
     boyut = sum(f.stat().st_size for f in dosyalar) / 1e6
     print(f"{len(dosyalar)} sembol · {top:,} snapshot · {boyut:.1f} MB")
-    if top:
-        gunler = max(1e-9, (max(ts) - min(ts)) / 86400_000)
-        print(f"⚠ 1 SAATLIK ufuk icin ~30 gun gerekir (bkz. dosya basi). "
-              f"Su an ~{gunler:.1f} gun.")
+    if not top:
+        return
+    gunler = max(1e-9, (max(ts) - min(ts)) / 86400_000)
+    print(f"⚠ 1 SAATLIK ufuk icin ~30 gun gerekir (bkz. dosya basi). "
+          f"Su an ~{gunler:.1f} gun.")
+
+    # 🔴 FAZ KILIDI DENETIMI — gizli kalirsa olcumu ZEHIRLER
+    # Makine uyudugunda arsiv durur. Makine "kullanici basindayken" acik ise
+    # belirli UTC saatleri sistematik olarak toplanir, digerleri hic toplanmaz.
+    # Bu, orneklemin PIYASA REJIMINE gore secilmesi demektir (Asya/Avrupa/ABD
+    # seanslari farkli saatlerde). Rapor bunu her calistirmada yuzune soyler.
+    ref = json.loads(dosyalar[0].read_text(encoding="utf-8"))
+    saatler = {}
+    for k in ref:
+        s = datetime.fromtimestamp(int(k) / 1000, timezone.utc).hour
+        saatler[s] = saatler.get(s, 0) + 1
+    kapsanan = len(saatler)
+    print(f"\nUTC SAAT KAPSAMASI ({dosyalar[0].stem}, {sum(saatler.values())} snapshot):")
+    en_cok = max(saatler.values()) if saatler else 1
+    for s in range(24):
+        n = saatler.get(s, 0)
+        cubuk = "█" * int(round(12 * n / en_cok)) if n else ""
+        print(f"  {s:02d}:00 {n:5d} {cubuk}{'  <- BOS' if not n else ''}")
+    print(f"\n  24 saatin {kapsanan}'i kapsandi.")
+    if kapsanan < 24:
+        print("  🔴 FAZ KILIDI RISKI: kapsanmayan saatler var. Makine o saatlerde")
+        print("     kapali/uykuda demektir. Bu, orneklemi PIYASA SEANSINA gore")
+        print("     secer (Asya/Avrupa/ABD). On kayit yazilirken bu sayilarla")
+        print("     birlikte degerlendirilmeli; gizlenirse olcum gecersizdir.")
 
 
 def main():
