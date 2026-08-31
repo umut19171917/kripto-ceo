@@ -698,6 +698,12 @@ taşımadığını **iki bağımsız yöntemle** gösterdi, B1'de son filtre ada
    ⛔ **"Skoru tersine çevir" DEMEK DEĞİLDİR** — bu **ham sinyal** aşamasıdır;
    mekanik ve maliyet aşamaları yapılmadan kural değişikliği çıkarılamaz.
 
+   🔵 **BAĞIMSIZ DOĞRULAMA (2026-08-31, `basis` ölçümü `162100b`):** funding —
+   skorun bileşeni — **4 yıl / 350.100 gözlemde** 24 saatlik yön üzerinde
+   ölçülebilir bilgi taşımıyor (uç bant farkı +0,025%, gün-kümeli GA95
+   [−0,285%, +0,337%]). Farklı veri kümesi, farklı yöntem, aynı yön.
+   ⚠ Bu, yukarıdaki 1/4 hükmünü **değiştirmez**; onu bağımsız olarak destekler.
+
    📌 **Bu maddenin cevabı artık ölçülü bir dayanağa sahip.** Alt sekiz maddenin
    (skor tabanı · L/S bileşeni · ağırlık validasyonu …) **önceliği düştü**:
    bütünün yönü tersken bileşen ince ayarı ikincil bir sorudur.
