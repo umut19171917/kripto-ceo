@@ -91,6 +91,15 @@ def bant_ortalamalari(G, bant=5):
 
 
 def _kirp(v, pay=0.01):
+    """%1-%99 kırpılmış ortalama — uç değer denetiminin ASIL ölçütü.
+
+    🔴 MEDYAN HER TASARIMDA GEÇERLİ DEĞİL (ölçüldü 2026-09-01, `giris`):
+    Eşleştirilmiş bir farkta bir kol sık sık **tam 0** katıyorsa (ör. tetiklenmeyen
+    sinyal = işlem yok = 0R), farkın medyanı o **sıfır kütlesine** oturur ve
+    ortalamayla taban tabana zıt görünür. Ölçülen örnek: `B−A` ortalaması
+    **−0,022R** iken medyanı **−1,025R** — çünkü A, sinyallerin %67'sinde 0R.
+    Böyle tasarımlarda **medyan bir sağlamlık ölçütü değildir**; kırpılmış
+    ortalama (o örnekte −0,041R) doğru olanıdır ve ortalamayla uyumludur."""
     if not v:
         return float("nan")
     if len(v) < 20:
