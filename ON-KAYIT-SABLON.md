@@ -69,6 +69,26 @@ Eşiklerin **dayanağı** yazılır (uydurulmuş sayı yasak). Varsayılanlar
 
 ⚠ Eşiği geçmek **"kârlı"** demek değildir; yalnız *"mekaniği ölçmeye değer"*.
 
+### 🔴 MALİYET TABANI — mekanik aşamasına geçiş şartı (`7910ce7`)
+
+Bir aday *"bilgi var"* dese bile, bulduğu kenar **hangi sicilde koşacaksa**
+onun `taban_R`'sinin altındaysa **mekanik aşamasına GEÇİLMEZ**:
+
+| sicil | `taban_R` | gürültü tabanının (0,03R) katı | sürücü |
+|---|---|---|---|
+| **ANA SİCİL** | **0,1736R** | 5,8× | stop_pct medyanı **%1,65** (dar) |
+| **RADAR** | **0,0279R** | 0,9× | stop_pct medyanı **%7,69** (geniş) |
+
+Ölçüldü 2026-09-01 (`ON-KAYIT-maliyet.md`): `ρ(stop_pct, maliyet_R) ≈ −0,97`,
+yani maliyet ∝ 1/stop genişliği. **Radar ~6 kat ucuz taşıyıcı.**
+
+⚠ Bu eşik **bu dönemin** ölçümüdür; stop genişliği rejimle değişir
+(ana sicilde ilk yarı 0,2416R → ikinci yarı 0,0738R). Yeni bir ön kayıt
+yazılırken `onkayit_maliyet.py` **yeniden koşulmalı**, sayı kopyalanmamalı.
+
+⛔ *"Stop'u genişletelim, maliyet düşer"* **yasak** — bu bir parametre
+taramasıdır ve stop genişliğinin **brüt**e etkisi ölçülmedi.
+
 ## 7. 🔴 KARMAŞIKLIK BÜTÇESİ (madde 6.2) — yeni kural EMEKLİLİK ADAYI ister
 
 *"VERİ/ÖLÇÜM ucuzdur (karar vermez). KURAL pahalıdır — kurallar birbiriyle
