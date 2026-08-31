@@ -365,12 +365,48 @@ def analyze_symbol(symbol, th=None):
 
 
 # ============================== Calisma dongusu ==============================
+# --- BIRIKEN DOSYALAR: asla kucumeyen sicil/arsivler (madde 7.6) --------------
+# Bu dosyalar YALNIZ BUYUR. Yarisindan fazlasini kaybeden bir yazma, veri
+# kaybinin ta kendisidir ve yazilmadan REDDEDILIR.
+#
+# NEDEN BURADA: defter.py ve radar_defter.py duzenleme kilidi altinda; ama ikisi
+# de atomik_yaz'dan geciyor. Korumayi tek gecis noktasina koymak, kilitli
+# dosyalara DOKUNMADAN onlari da kapsar.
+#
+# NEDEN %50 (hassas degil, felaket esigi): amac gunluk dalgalanmayi yakalamak
+# degil, TOPLU KAYBI yakalamaktir. Dis proje `os.replace` ile 58 sembolde 4
+# gunluk veriyi kaybetti; bizde A1 arizasi esikler.json'un 11 sembolunu birden
+# sildi. Ikisi de bu esigi asardi. Dar bir esik canli sureci yanlis alarmla
+# durdurabilirdi — kayit tutmayi durdurmak da bir veri kaybidir.
+BIRIKEN_DOSYALAR = ("kripto-defter.json", "radar-defter.json", "bot-defter.json")
+KUCULME_SINIRI = 0.50
+
+
+class BirikenDosyaKuculdu(RuntimeError):
+    """Biriken bir dosya yarisindan fazlasini kaybedecekti; yazma iptal edildi."""
+
+
 def atomik_yaz(path, obj):
     """JSON'u atomik yaz (tmp + os.replace): okuyucu asla yarim dosya gormez.
-    signals/makro/rejim/esikler ayni anda baska surecler tarafindan okunur."""
+    signals/makro/rejim/esikler ayni anda baska surecler tarafindan okunur.
+
+    🔴 BIRIKEN_DOSYALAR icin ek degismez (madde 7.6): sonuc eskisinin
+    %50'sinden kucukse BirikenDosyaKuculdu firlatir ve ESKI DOSYA KALIR."""
     path = Path(path)
+    metin = json.dumps(obj, ensure_ascii=False, indent=2)
+    if path.name in BIRIKEN_DOSYALAR and path.exists():
+        try:
+            eski = path.stat().st_size
+        except OSError:
+            eski = 0
+        yeni = len(metin.encode("utf-8"))
+        if eski > 0 and yeni < eski * KUCULME_SINIRI:
+            raise BirikenDosyaKuculdu(
+                f"{path.name}: {eski:,} -> {yeni:,} bayt "
+                f"(%{100*yeni/eski:.0f}). Yazma IPTAL, eski dosya korundu. "
+                f"Bu, kalici veri kaybinin ta kendisidir.")
     tmp = path.with_name(path.name + ".tmp")
-    tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp.write_text(metin, encoding="utf-8")
     os.replace(tmp, path)
 
 

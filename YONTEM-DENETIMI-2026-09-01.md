@@ -76,3 +76,61 @@ Denetim sonucundan bağımsız olarak: bootstrap ve permütasyon **tek bir
 paylaşılan modüle** (`olcum.py`) taşınır ve bant raporu **ikisini birden
 basmadan hüküm satırı yazmayı reddeder**. Madde 8.7'nin gereği:
 *kuralı düzyazıyla değil KODLA koru.*
+
+---
+
+# SONUÇ — **BOOTSTRAP FAZLA KESİN DEĞİLMİŞ** (2026-09-01)
+
+| ölçüm | gözlenen fark | bootstrap GA yarı-gen. | permütasyon p | permütasyonun ima ettiği yarı-gen. | oran |
+|---|---|---|---|---|---|
+| **topls `d1`** (19.852 gözlem, 30 gün) | +0,0100% | **0,0870%** | 0,8052 | 0,0744% | **0,86x** |
+| **basis artık** (350.100 gözlem, 1.459 gün) | −0,0271% | **0,2427%** | 1,0000 | 0,0316% | **0,13x** |
+
+**İki ölçümde de iki yöntem AYNI hükme götürdü** (bilgi yok).
+
+## §1'deki iki açıklamadan hangisi doğruydu
+
+Şüphe şuydu: *"topls'te güç hesabı %0,29 öngördü, gerçekleşen %0,087 — ya
+varsayımım fazla muhafazakârdı, ya bootstrap belirsizliği az gösteriyor."*
+
+**Cevap: birincisi.** topls'te permütasyonun ima ettiği genişlik (0,0744%)
+bootstrap'ınkine (0,0870%) çok yakın — **0,86 kat**. Bağımsız bir yöntem aynı
+büyüklükte belirsizlik veriyor. Yani bootstrap fazla kesin değildi;
+**"2,5 etkin bağımsız sembol" varsayımım fazla muhafazakârdı.**
+
+🔴 **Bunun önemi:** aynı bootstrap `basis`, `mekanik`, `portföy` ve `ters`
+hükümlerinde de kullanıldı. O hükümler **şüpheli değil** — hatta muhafazakâr
+tarafta duruyorlar.
+
+## Ama denetim bir şey daha öğretti — permütasyon evrensel bir yükseltme DEĞİL
+
+`basis`te oran **0,13x**: permütasyon bootstrap'tan **yedi kat dar** bir
+belirsizlik veriyor. §4'te bu **koşumdan önce** öngörülmüştü:
+
+> *"gün içi karıştırma gün içi otokorelasyonu korumaz… permütasyon fazla dar
+> bir sıfır dağılımı üretir"*
+
+`basis`in ufku **24 saat** ve gözlemler saatlik → ardışık 24 gözlem neredeyse
+aynı ileri pencereyi paylaşıyor. Gün içi karıştırma bu örtüşmeyi yok sayar ve
+sıfır dağılımını olduğundan dar gösterir. `topls`in ufku **1 saat** olduğu için
+orada bu sorun yok — ve zaten iki yöntem orada uyuştu.
+
+### 📌 Kalıcı kural (koda geçirildi)
+
+| durum | hangi yöntem güvenilir |
+|---|---|
+| ufuk ≈ örnekleme aralığı (örtüşme yok) | **ikisi de** — uyuşmaları gerçek bir kontroldür |
+| ufuk >> örnekleme aralığı (örtüşen getiri) | **bootstrap**; permütasyon fazla dar |
+| öngörücü çok yavaş (τ >> 1 gün) | **bootstrap**; permütasyon fazla dar |
+
+🔴 **İkisi çelişirse EN MUHAFAZAKÂR okuma alınır** — `olcum.bant_raporu`
+bunu artık kendi basıyor, yoruma bırakmıyor.
+
+## Ne değişti, ne değişmedi
+
+- ⛔ **Hiçbir hüküm değişmedi.** §3'ün yasağı işledi: p'ler büyük çıktı,
+  zaten aday diriltme sorusu doğmadı.
+- ✅ Var olan hükümlere **güven arttı** — bağımsız ikinci yöntem aynı yeri
+  gösterdi.
+- ✅ Bundan sonraki her bant ölçümü **iki çıkarımı birden** basacak;
+  `olcum.bant_raporu` permütasyon hesaplanmadan **hüküm satırı yazmıyor**.
