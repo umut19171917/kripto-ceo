@@ -182,3 +182,96 @@ devrede değil, ama TWAP gecikmesi **her zaman** devrede.
 süreçlere dokunmaz. Bu commit'ten **sonra** yazılır, ayrı commit'lenir.
 İndirilen ham veri `_cache/basis/` altına yazılır (gitignore'lu; silinmesi
 ölçümü bozmaz, yalnız yeniden koşumu yavaşlatır).
+
+---
+
+# SONUÇ — **BASIS DALI ÖLÜ** (2026-08-31)
+
+**Örneklem:** 10 sembol · **350.100** saatlik gözlem · **1.459 takvim günü**
+(2022-09-01 → 2026-08-31). LABUSDT spot verisi olmadığı için §3 gereği düştü.
+
+## §6'nın üç kollu okuması devreye girdi
+
+```
+                   bant ortalamalari (24s ileri getiri)        rho     uc fark   gun-kumeli GA95
+ARTIK    +0,232  +0,089  +0,083  +0,097  +0,205               -0,100   -0,027%  [-0,267, +0,218]
+HAM BASIS+0,284  +0,095  +0,038  +0,044  +0,245               -0,300   -0,039%  [-0,341, +0,255]
+FUNDING  +0,241  +0,023  -0,034  +0,210  +0,266               +0,300   +0,025%  [-0,285, +0,337]
+```
+
+**Üçünün de GA'sı sıfırı kapsıyor.** §6 tablosunun son satırı: *ham basis bilgi
+YOK + artık bilgi YOK → ❌ basis dalı ölü.*
+
+İki sağlamlık kolu da aynı yeri gösteriyor: örtüşmesiz günlük (n=14.580)
+GA [−0,333, +0,408]; en güçlü üç sembol atılınca GA [−0,161, +0,339].
+
+## 🔴 BU SEFERKİ "YOK", öncekilerden DAHA GÜÇLÜ bir yok
+
+Şimdiye kadarki ölümler *"aradık, bulamadık"* biçimindeydi. Bu farklı:
+
+**%95 güven aralığı, ekonomik eşiğin kendisini DIŞLIYOR.** §6 eşiği ±%0,5;
+artığın GA üst sınırı **+0,218**, ham basis'in **+0,255**, funding'in **+0,337**.
+Yani *"%0,5'lik bir etki olsaydı görürdük — yok"* diyebiliyoruz.
+Bu **kanıt yokluğu değil, yokluğun kanıtı** (aradığımız büyüklükte).
+
+§5'in güç hesabı da tuttu: saptanabilir en küçük fark **%0,31** öngörülmüştü,
+gerçekleşen GA yarı-genişliği ~%0,24-0,27 çıktı — öngörüden biraz **daha iyi**.
+
+## ⚠ BEKLENTİM YANLIŞ ÇIKTI — ve bu önemli
+
+§7'de yazmıştım: *"ρ(basis, funding) **yüksek** (≥0,8) çıkacak, çünkü funding
+zaten spot-perp farkından üretiliyor."*
+
+**Ölçüm: ρ medyanı +0,558 · R² = 0,369.** Yani funding, basis'in yalnız
+**~%37'sini** açıklıyor. Basis, sandığımdan **çok daha bağımsız bir değişken**.
+Premium index akıl yürütmem yön olarak doğru, **büyüklük olarak yanlıştı**.
+
+🔴 **Bu, sonucu daha kötü yapıyor, daha iyi değil.** Dal, *"aynı şeyin başka
+adıydı"* diye ölmedi. **Gerçekten kısmen farklı bir değişkendi ve yine de
+hiçbir şey taşımıyordu.**
+
+## Kontrol kolunun söylediği
+
+Funding **bizim skorumuzun içinde** olan değişken. 4 yıl, 350 bin gözlemde
+24 saatlik yön üzerinde **ölçülebilir bir bilgi taşımıyor** (GA [−0,285, +0,337]).
+Bu, B1'in bulgusuyla (`b01d493`) aynı yöne bakıyor ve `SISTEM.md` §12/1'in
+kaydını bağımsız bir veri kümesinde tekrarlıyor.
+
+## 📌 POST-HOC GÖZLEM — bulgu DEĞİLDİR, kayda geçiyor
+
+Üç kolda da bantlar **monotonik değil, U biçimli**: iki uç ortadan yüksek
+(ör. ham basis +0,284 · +0,095 · +0,038 · +0,044 · +0,245).
+
+🔴 **Bu bir bulgu değildir, üç nedenle:**
+1. Ön kayıt **monotonik** sıralamayı ölçüyor; U biçimi bu testin ölçtüğü şey değil.
+2. Genliği (~%0,15-0,25) GA'nın (±%0,25) **içinde** — gürültüden ayrılmıyor.
+3. Uç basis dönemleri yüksek oynaklık dönemleridir; 4 yıllık pencerede boğa
+   getirisinin oraya yığılması **tanım gereği** beklenir. Ayrıştırılmadı.
+
+Sınanmak istenirse **kendi ön kaydını, doğrusal-olmayan bir istatistikle**
+gerektirir. Bu sonuçtan hüküm çıkarmak *"en iyi hücreyi seçmek"* olur.
+
+## 🔴 MADDE 7.4 İÇİN ASIL SONUÇ — hipotez ZAYIFLADI
+
+Tek-bant hipotezi şunu söylüyordu: *14 adayın hepsi aynı bandın kılıkları
+olduğu için başarısız oluyor.* Bu ölçüm o açıklamayı **desteklemiyor**:
+
+| beklenen (tek-bant) | ölçülen |
+|---|---|
+| basis ≈ funding (aynı bilgi) | ρ=0,558 · R²=0,37 → **%63'ü farklı** |
+| farklı bilgi bulunursa yön çıkar | farklı kısım da **boş** |
+
+Yani başarısızlığın nedeni *"hep aynı şeye bakıyoruz"* değil.
+**Kısmen farklı bir şeye baktık, o da boş çıktı.**
+
+Bu, daha sert bir olasılığı öne çıkarıyor: **bu ölçekte (saatlik, halka açık
+türev metrikleri, 24 saat ileri) yön bilgisi olmayabilir.** Kanıtlanmadı —
+ama bant dışı kalan iki adayın (emir defteri derinliği · çapraz borsa)
+ön olasılığı bu ölçümden **sonra daha düşük.**
+
+## Sıradaki
+
+Bant dışı adaylardan geriye ikisi kaldı ve **ikisi de geriye dönük test
+edilemiyor**: emir defteri derinliğinin geçmişi yok, `top_ls` 30 günlük ve
+arşivimizde yok. İkisi de **bugünden arşivlenmeye başlanmadan** hiçbir zaman
+sınanamaz — her geçen gün kalıcı kayıptır.
