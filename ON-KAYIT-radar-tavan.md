@@ -200,3 +200,65 @@ kapıyı simüle eder, A ve B kollarını ayırır, P1/P2/G1'i **sırayla** değ
 Ara koşularda yalnız **sayaç** gösterir (n/72); 72'ye ulaşmadan hüküm basmaz —
 erken bakıp karar vermeyi engellemek için (radar-v2'de bu kural **fiilen işe
 yaradı**: kural ilk 15 işlemde kazanıyordu, sonunda düştü).
+
+---
+
+# 🔴 1. KURULUM İPTAL — §7 gereği (2026-08-31)
+
+## Ne oldu
+
+Kapı **canlıya girdi.** §3'ün *"kapı `radar.py`'de yazılı ama devrede
+değildir"* şartı ihlal edildi; §7'nin *"Kapı test bitmeden canlıya alınırsa
+(A kolu gözlemlenemez hâle gelir)"* koşulu tetiklendi.
+
+**Kanıt (yorum değil, günlüğün kendisi):**
+```
+[2026-08-30T21:24:07] [BASLA] radar ...            <- yeniden baslatma
+[2026-08-30T23:28:25] [RADAR-TAVAN] SKRUSDT LONG atlandi: ...  <- kapi SUZUYOR
+```
+
+## Neden oldu — varsayım hatası
+
+Kod 2026-08-30'da commit'lenirken *"radar.py'yi yeniden başlatmıyorum, o yüzden
+canlıya girmez"* diye kayda geçmişti. **Bu bir üretim kapısı değilmiş.**
+Radar 3 günde **5 kez** yeniden başladı; zamanlanmış görev yok, yani yeniden
+başlatma anı denetimimiz dışında (makine ya da kullanıcı).
+
+**Ders:** *"Yeniden başlatmıyorum" bir bayrak değildir.* Commit'lenen kod, süreç
+bir sonraki kez kalktığında canlıya girer. Kapatmak isteniyorsa **koda bayrak**
+konmalı. Yapıldı: `radar.TAVAN_CANLI = False` (`afd28b2`).
+
+## Hasar
+
+- **19 aday** kapıdan atıldı → B kolu olacaklardı, deftere hiç girmediler, **kalıcı kayıp**
+- A kolunda **0 kayıt** — örneklem hiç başlamadı
+- Defter **29 saat** boyunca hiç büyümedi (ölçüm tabanı durdu)
+
+## Yan bulgu (iptalden bağımsız, ölçülmüş)
+
+Kapı canlıyken **her iki yönü birden tıkadı:** LONG 3 açık = %3,0 ·
+SHORT 4 açık = %4,0 · tavan %2,0. Kayıt başına %1 riskle %2 tavan, yön başına
+**en fazla 2 açık kayıt** demektir — 50 coinlik bir evrende.
+
+⚠ Bu, kill şartlarına **dokunmaz** ve hiçbir eşiği değiştirmez. Ama §3'ün
+varsaydığı **%27 kabul oranını** riske sokar: gerçek oran çok daha düşükse
+72 kabul 30 günde dolmaz, "30 gün" ölçütü bağlar ve **güç §5'in verdiğinden
+de düşük** olur. Hüküm yazılırken bu şerh **birlikte** yazılacaktır.
+
+---
+
+# 2. KURULUM — yeniden donduruldu (2026-08-31)
+
+**Değişen tek şey `KAYIT_ANI`'dır.** §2 kural · §4 kill şartları · §5 güç
+hesabı · §6 beklenti · §7 geçersizlik · §8 sonuç eylemleri **aynen geçerlidir**
+ve **değiştirilmemiştir**. Meşruiyeti: 1. kurulumda **hiçbir sonuç
+görülmedi** (A=0, B=0), dolayısıyla ölçütler kirlenmedi.
+
+| | değer |
+|---|---|
+| yeni `KAYIT_ANI` | **2026-08-31T19:33:13+00:00** (radar'ın tavansız kalktığı an) |
+| kapı durumu | `radar.TAVAN_CANLI = False` — **devrede DEĞİL**, simülasyonda uygulanır |
+| örneklem | bu andan SONRA oluşan radar kayıtları; öncesi **kullanılmaz** |
+| bitiş | 72 kabul **veya** 30 gün — hangisi önce |
+
+🔴 **`TAVAN_CANLI`'yı `True` yapmak bu ön kaydı İKİNCİ kez geçersiz kılar.**

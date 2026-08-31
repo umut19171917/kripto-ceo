@@ -35,7 +35,7 @@ SICIL = KOK / "radar-defter.json"
 # Ornekem baslangici = on kaydin KENDI commit'i (b66a046). Bu tarihten
 # onceki 459 kayit KULLANILMAZ: uzerlerinde 2026-08-30'da kesifsel geriye
 # oynatma yapildi, yani orneklem icidir.
-KAYIT_ANI = "2026-08-30T20:31:37+00:00"
+KAYIT_ANI = "2026-08-31T19:33:13+00:00"   # 2. kurulum: 1.si §7 geregi IPTAL (kapi canliya girdi)
 ON_KAYIT_COMMIT = "b66a046"
 HEDEF_KABUL = 72          # §5 guc hesabi: n=72/196 -> gorulebilen fark 0,531R
 AZAMI_GUN = 30            # hangisi once
