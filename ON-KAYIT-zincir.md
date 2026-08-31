@@ -166,3 +166,89 @@ ana koldan güçlü çıkması. Çıkarsa, bulduğumuz şey akışa özgü deği
 `onkayit_zincir.py` — **salt okur**, canlı hiçbir dosyaya yazmaz. `olcum.py`
 çıkarım katmanını kullanır. İndirilen ham veri `_cache/zincir/` altına yazılır
 (gitignore'lu). Bu commit'ten SONRA yazılır, AYRI commit'lenir.
+
+---
+
+# SONUÇ — **BORSA AKIŞLARI DA BİLGİ TAŞIMIYOR** (2026-09-01)
+
+**Örneklem:** 3.528 gün · 2017-01-01 → 2026-08-29 · tek varlık (BTC).
+
+## Ana kol — §6'nın karar kuralı
+
+```
+  z = net akış / 30g sd  ->  ERTESI GUN getirisi
+  ortalama   -0,050  +0,485  +0,002  +0,300  +0,197     uc fark +0,247%
+  MEDYAN     +0,151  +0,233  -0,044  +0,111  +0,165
+  KIRPILMIS  -0,011  +0,465  -0,012  +0,270  +0,174
+  rho = +0,300     bootstrap GA95 [-0,146%, +0,653%]     permutasyon p = 0,1855
+```
+
+**❌ BİLGİ YOK.** Üç şartın üçü de kalıyor: GA sıfırı **kapsıyor** ·
+p **0,19** · ρ=**0,300** (eşik 0,8; bantlar monotonik değil — 2. bant en yüksek,
+3. bant sıfıra yakın).
+
+**Sağlamlık:** ilk yarı uç fark **+0,564%** (p=0,079), ikinci yarı **−0,140%**
+(p=0,477). **İşaret dönüyor.** Gürültüyle uyumlu.
+
+## Kontrol kolu da düştü
+
+`AdrActCnt` günlük değişimi: uç fark +0,315%, GA [−0,049%, +0,686%], p=0,1037.
+**Hiçbir zincir-üstü seri bilgi göstermedi** — yani ana kolun düşmesi
+"yanlış seri seçtik" ile açıklanamaz.
+
+## 🔴 ÖN KAYIT TAM DA BURADA İŞE YARADI
+
+**Ham çıkış kolu istatistiksel olarak GEÇTİ:**
+
+```
+5b. HAM CIKIS   uc fark +0,407%   GA95 [+0,004%, +0,818%]   p = 0,0260
+```
+
+GA sıfırı **dışlıyor** ve p<0,05. Ön kayıt olmasaydı bugün *"borsadan çıkış
+ertesi günü öngörüyor"* diye yazardım. **Yazamıyorum, üç bağımsız nedenle:**
+
+**1. Peşinen güçsüz ilan edilmişti (§5).** Ham çıkışın τ'su 8,35 gün →
+etkin n **672**, saptanabilir fark **~%0,88**. Gözlenen +0,407% bunun yarısı.
+Hükmü sonuç ne olursa olsun **"ölçülemedi"** yazılıydı.
+
+**2. Çoklu karşılaştırma (§6, peşinen).** Altı kol raporlandı. Sıfır hipotezi
+altında en az birinin p<0,05 çıkma olasılığı ≈ **%26**. *"Ana kol düşüp
+ikincil bir kol geçerse bu BULGU DEĞİLDİR"* satırı tam bunun için yazılmıştı.
+
+**3. 🔴 Ve p'nin kendisi şişkin.** `olcum.py`'de 2026-09-01 denetiminde
+ölçülerek yazılan şerh: *"öngörücü yavaşsa (τ ≫ 1 gün) gün-içi/etiket
+permütasyonu **fazla dar** bir sıfır dağılımı üretir ve p'yi küçük gösterir."*
+Ham çıkışın τ'su **8,35 gün**; etiketleri tüm günler arasında karıştırmak o
+kalıcılığı yok sayıyor. **Yani p=0,026 yöntemin bir eseri, verinin değil.**
+
+⚠ Aynı gerekçe ana kol için **geçerli değil**: `z`'nin τ'su **1,01 gün**, yani
+orada permütasyon güvenilir — ve orada p=0,1855.
+
+## 🔴 PROJE İÇİN ASIL SONUÇ
+
+Bu, projenin sınadığı **ilk gerçek bant dışı** değişkendi. Önceki 16 aday
+Binance perp'te gerçekleşmiş işlemden türüyordu; `basis` ve `top_ls` dahil.
+Borsa akışı zincir üzerinde coin hareketidir — **bandın dışı.**
+
+**Ve o da boş çıktı.**
+
+Madde 7.4'ün tek-bant hipotezi `basis`te zayıflamıştı (`162100b`: basis'in
+%63'ü funding'den farklıydı ve o kısım da boştu). Bu ölçüm onu **daha da**
+zayıflatıyor: *"hep aynı bilgiye baktığımız için bulamıyoruz"* açıklaması artık
+iki bağımsız ölçümle desteklenmiyor.
+
+Geriye daha sert olasılık kalıyor — ve her ölçümle biraz daha güçleniyor:
+**bu ölçekte, günlük/saatlik ufukta, halka açık veriyle yön bilgisi
+bulunamıyor.** ⚠ Kanıtlanmadı; *"aradık, bu araçlarla bulamadık"* deniyor.
+
+## Beklentim tuttu — ama karşı argümanım da yanlış çıkmadı
+
+§8'de *"bulamayacağımızı bekliyorum"* yazmıştım: tuttu. Ama aynı yerde
+*"bu ilk gerçek bant dışı değişken, önceki başarısızlıklar bunun önsel
+olasılığını düşürmez"* diye kendime karşı argüman da yazmıştım — **o da
+haklıydı ve ölçmeye değerdi.** Ölçmeseydik bilemezdik.
+
+## Sıradaki
+
+Kuyrukta **emir defteri derinliği** kaldı (~30 gün). Makro bölgesi kaynak
+kısıtıyla beklemede. Bu ölçüm **17. ölü aday**dır.
