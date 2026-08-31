@@ -127,3 +127,77 @@ stratejisinin onu geçmesi için çok güçlü olması gerekir.
 `onkayit_ters.py` — B2'nin veri yolunu ve `simule()` desenini kullanır,
 yalnız yön/giriş/stop LONG dalına çevrilir. Salt okurdur. Ön kayıt
 commit'inden **sonra** yazılır, ayrı commit'lenir.
+
+---
+
+# SONUÇ — **TERS KURAL DA ÖLÜ** (2026-08-31)
+
+## §5'in karar kuralı devreye girdi
+
+```
+                    sinyal  tetik   ort net R   gun-kumeli GA95      portfoy
+TUM PENCERE           456    168     +0,075R   [-0,320, +0,473]     933,58 $ / -20,2%
+BOGA ONCESI (<08-20)  404    140     -0,134R   [-0,447, +0,209]     915,92 $ / -20,2%
+BOGA        (>=08-20)  52     28     +1,122R   [-0,594, +1,795]    1052,33 $ /  -2,1%
+```
+
+**Ters kuralın tüm artısı 11 günlük boğa penceresinden geliyor. Boğa öncesi
+54 günde NEGATİF.**
+
+§5'te, sonucu görmeden şu yazılmıştı:
+
+> *"Yalnız boğada pozitif → ❌ **DEĞMEZ.** Boğada LONG tanımı gereği kazanır;
+> bu bulgu değil **totolojidir**."*
+
+**Gerçekleşen tam olarak budur. İleri-zamanlı test kurulmayacak.**
+
+## Üstelik istatistik de yok
+
+Üç kesitin **üçünde de** güven aralığı sıfırı kapsıyor — boğa kolu dahil
+(28 işlem, ~11 gün). Yani *"boğada kazandı"* bile gösterilemiş değil,
+sadece gözlenmiş.
+
+## Yan yana — iki yön de kaybediyor
+
+```
+MEVCUT (SHORT)   tetik 150 · ort -0,327R · portfoy 27 islem  895,74 $ · dusus -13,7%
+TERS   (LONG)    tetik 168 · ort +0,075R · portfoy 41 islem  933,58 $ · dusus -20,2%
+                                                    BTC al-tut 1302,37 $ · dusus  -6,4%
+```
+
+**İkisi de 1000 $'ın altında bitiyor**, ikisi de al-tutun çok gerisinde,
+ve ters kural **daha derin düşüş** yaşatıyor (−%20,2 vs −%13,7).
+
+## Beklentim kısmen tuttu — mekanik ham kenarı yedi
+
+§6'da *"mekanikte kaybedebilir: LONG girişi `swing_high` kırılımı, yani
+**tepeden alım**"* yazmıştım. Olan bu: ham sinyalde boğa öncesi tersleşme
+**daha güçlüydü** (+%0,392), ama mekanik uygulanınca boğa öncesi **−0,134R**
+oldu. **Kırılım girişi ham kenarı yiyor.**
+
+⚠ **Not:** B2'de stop **koruyucu** çıkmıştı; burada mekanik (giriş seviyesi)
+**yıkıcı**. İkisi çelişmiyor — farklı bileşenler. Stop zararı kesiyor,
+tepeden-alım girişi kenarı yiyor.
+
+## Top-3 çıkarılınca "pozitif" görünüyor — bu KANIT DEĞİL
+
+Top-3 sembol (SOL, ETH, BNB) çıkarılınca +0,135R ve 1035,57 $ çıkıyor.
+🔴 **Bu bir bulgu değildir:** hangi sembollerin çıkarılacağı **sonuca
+bakılarak** belirlendi ve GA hâlâ sıfırı kapsıyor [−0,309, +0,543].
+*"En iyi hücre seçilmez"* kuralının ta kendisi.
+
+## 🔴 PROJE İÇİN ASIL SONUÇ
+
+`squeeze_scores()` **hiçbir yönde kullanılabilir bilgi taşımıyor**:
+
+| yön | sonuç |
+|---|---|
+| mevcut (SHORT) | ters sıralıyor, −0,327R, portföy −%10,4 |
+| ters (LONG) | boğa öncesi negatif; artısı totoloji |
+
+Skor **yanlış yönde değil — kullanılamaz durumda.** Yönü çevirmek çözüm
+değil, çünkü çevirince de mekanik onu yiyor.
+
+**Sıradaki adım (b) — B4, tek-bant sorunu:** bandın dışında bilgi var mı?
+Bu artık "iyileştirme" sorusu değil, **"bu veri bir strateji taşıyabilir mi"**
+sorusudur.
