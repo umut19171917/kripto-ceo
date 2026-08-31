@@ -37,15 +37,51 @@ from pathlib import Path
 
 KOK = Path(__file__).parent
 KAYNAK = KOK / "perp-arsiv"
-HEDEF = Path(r"H:\Drive'ım\kripto-yedek\perp-arsiv")
+
+# 🔴 2026-08-31 DUZELTME — bu betik 5 gundur SESSIZCE hicbir sey yapmiyordu.
+# Bulunus: gorev 30.08'de 267014 (sonlandirildi) dondu, log'a TEK satir yazmadi,
+# ve hedefte SIFIR yedek vardi. Sebep: H: (Google Drive) BAGLI DEGIL.
+# Eski 4. kural "hedef disk yoksa SESSIZCE cik" idi — gorunmezligin kaynagi oydu.
+#
+# ⏰ VE DOSYANIN KENDI HESABI YANLISTI: "24 Eylul'e kadar risk yok" deniyordu.
+# Arsiv 2026-07-27'ye kadar gidiyor; 2026-08-31 eksi 29 gun = 2026-08-02.
+# Yani 07-27 -> 08-02 arasi ~6 gun ZATEN API'den cekilemez. Risk BUGUN var.
+#
+# Cozum: sirali hedef listesi + hicbiri yazilabilir degilse GURULTULU hata.
+HEDEFLER = [
+    Path(r"H:\Drive'ım\kripto-yedek\perp-arsiv"),          # tercih: baska disk
+    Path.home() / "kripto-yedek" / "perp-arsiv",           # yedek plan: C: (ayni disk)
+]
 TUTMA_HAFTA = 8            # ~2 ay geriye; 33 MB ham -> zip ~8-10 MB/adet
 ARALIK_GUN = 7
 
 
+def hedef_sec(yaratmadan=False):
+    """Ilk YAZILABILIR hedefi dondur. Yoksa None.
+
+    ⚠ Ikinci hedef KAYNAKLA AYNI DISKTE. Disk arizasina karsi korumaz;
+    yalniz kaza sonucu silme/bozulmaya karsi korur. H: baglanirsa
+    otomatik olarak ona doner (liste sirali)."""
+    for h in HEDEFLER:
+        try:
+            if h.exists():
+                return h
+            if not yaratmadan and h.parent.parent.exists():
+                h.mkdir(parents=True, exist_ok=True)
+                return h
+        except Exception:
+            continue
+    return None
+
+
+HEDEF = hedef_sec(yaratmadan=True) or HEDEFLER[-1]      # geriye donuk uyum
+
+
 def _yedekler():
-    if not HEDEF.exists():
+    h = hedef_sec(yaratmadan=True)
+    if h is None or not h.exists():
         return []
-    return sorted(HEDEF.glob("perp-arsiv-*.zip"))
+    return sorted(h.glob("perp-arsiv-*.zip"))
 
 
 def _son_yedek_yasi():
@@ -84,15 +120,24 @@ def yedekle(zorla=False):
     if not zorla and yas is not None and yas < ARALIK_GUN:
         print(f"son yedek {yas} gun once — {ARALIK_GUN} gun dolmadi, atlandi")
         return 0
-    try:
-        HEDEF.mkdir(parents=True, exist_ok=True)
-    except Exception as e:
-        print(f"hedef erisilemiyor ({type(e).__name__}) — sessiz cikis")
-        return 0
+    # 🔴 ESKI DAVRANIS: "hedef erisilemiyor -> sessiz cikis, kod 0".
+    # 5 gun boyunca hicbir yedek alinmadi ve HIC KIMSE FARK ETMEDI.
+    # Yeni davranis: hedef yoksa GURULTULU hata + SIFIRDAN FARKLI cikis kodu.
+    hedef = hedef_sec()
+    if hedef is None:
+        print("🔴 HICBIR YEDEK HEDEFI YAZILABILIR DEGIL:")
+        for h in HEDEFLER:
+            print(f"     {h}  ->  {'var' if h.exists() else 'YOK'}")
+        print("   YEDEK ALINAMADI. Bu sessiz gecilmez — arsiv yeniden URETILEMEZ.")
+        return 2
 
     gun = datetime.now().strftime("%Y-%m-%d")
-    son = HEDEF / f"perp-arsiv-{gun}.zip"
-    gecici = HEDEF / f".perp-arsiv-{gun}.tmp.zip"
+    son = hedef / f"perp-arsiv-{gun}.zip"
+    gecici = hedef / f".perp-arsiv-{gun}.tmp.zip"
+    if hedef != HEDEFLER[0]:
+        print(f"⚠ TERCIH EDILEN HEDEF ({HEDEFLER[0]}) YOK — yedek plana yaziliyor:")
+        print(f"   {hedef}")
+        print("   ⚠ Bu KAYNAKLA AYNI DISKTE. Disk arizasina karsi KORUMAZ.")
     dosyalar = sorted(KAYNAK.glob("*.json"))
 
     # 1) gecici dosyaya yaz — KAYNAGA DOKUNULMAZ
