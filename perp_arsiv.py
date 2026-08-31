@@ -75,6 +75,12 @@ UCLAR = {
     "ls":    ("/futures/data/globalLongShortAccountRatio", lambda x: float(x["longShortRatio"])),
     "oi":    ("/futures/data/openInterestHist",            lambda x: float(x["sumOpenInterest"])),
     "taker": ("/futures/data/takerlongshortRatio",         lambda x: float(x["buySellRatio"])),
+    # 2026-08-31 eklendi (madde 7.4 / B4). `ls` TUM hesaplarin oranidir;
+    # `top_ls` en buyuk hesaplarin POZISYON oranidir. Fark (top_ls - ls) =
+    # "buyuk oyuncu kalabaliktan ayrisiyor mu". Bu da 30 GUNLUK sinifta
+    # (olculdu: 25 gun OK, 40 gun HTTP 400) -> arsivlenmezse KALICI kayip.
+    # ⚠ Bu bir HIPOTEZ DEGIL, veri toplamadir. Sinanmasi ayri on kayit ister.
+    "top_ls": ("/futures/data/topLongShortPositionRatio",  lambda x: float(x["longShortRatio"])),
 }
 
 
@@ -149,13 +155,17 @@ def _cek(yol, sym, bitis_ms, cikar):
     return out
 
 
-def sembol_arsivle(sym, gun_geri):
-    """Bir sembolun uc serisini cek + BIRLESTIR + atomik yaz. Doner: (eklenen, toplam)."""
+def sembol_arsivle(sym, gun_geri, uclar=None):
+    """Bir sembolun uc serisini cek + BIRLESTIR + atomik yaz. Doner: (eklenen, toplam).
+
+    `uclar`: None -> hepsi. Yeni bir uc eklendiginde YALNIZ onu geriye doldurmak
+    icin ({ad: UCLAR[ad]}) verilir; digerleri bosuna cekilmez. Birlestirme
+    degismezi ayni sekilde korur — eksik anahtar DUSMEZ, eskisi kalir."""
     eski = _oku(sym)
     yeni = {}
     simdi = time.time() * 1000
     hedef = simdi - gun_geri * 86400_000        # bu ana kadar GERIYE inilecek
-    for anahtar, (yol, cikar) in UCLAR.items():
+    for anahtar, (yol, cikar) in (uclar or UCLAR).items():
         seri, imlec, tur = {}, simdi, 0
         # GERIYE sayfalama: her sayfa 500 nokta x 5dk = ~41 saat.
         # 29 gun ~= 17 sayfa; tavan 25 (guvenlik payi + eksik sayfa ihtimali).
@@ -193,8 +203,9 @@ def durum():
         print("perp-arsiv/ yok — henuz hic kosulmamis.")
         return
     dosyalar = sorted(ARSIV.glob("*.json"))
-    print(f"{'sembol':<14} {'ls':>7} {'oi':>7} {'taker':>7}   {'en eski':<17} {'en yeni':<17}")
-    print("-" * 78)
+    baslik = "".join(f"{a:>8}" for a in UCLAR)          # uclara gore GENEL
+    print(f"{'sembol':<14}{baslik}   {'en eski':<17} {'en yeni':<17}")
+    print("-" * (78 + 8 * (len(UCLAR) - 3)))
     top = 0
     for f in dosyalar:
         d = json.loads(f.read_text(encoding="utf-8"))
@@ -203,9 +214,9 @@ def durum():
             continue
         top += _sayac(d)
         an = lambda ms: datetime.fromtimestamp(ms / 1000, timezone.utc).strftime("%Y-%m-%d %H:%M")
-        print(f"{f.stem:<14} {len(d.get('ls', {})):>7} {len(d.get('oi', {})):>7} "
-              f"{len(d.get('taker', {})):>7}   {an(min(tsler)):<17} {an(max(tsler)):<17}")
-    print("-" * 78)
+        say = "".join(f"{len(d.get(a, {})):>8}" for a in UCLAR)
+        print(f"{f.stem:<14}{say}   {an(min(tsler)):<17} {an(max(tsler)):<17}")
+    print("-" * (78 + 8 * (len(UCLAR) - 3)))
     print(f"{len(dosyalar)} sembol · {top:,} nokta · {sum(f.stat().st_size for f in dosyalar)/1e6:.1f} MB")
 
 
@@ -214,14 +225,23 @@ def main():
         durum()
         return 0
     gun = TAVAN_GUN if "--dolgu" in sys.argv else 2
+    uclar = None
+    for a in sys.argv:
+        if a.startswith("--uc="):
+            ad = a.split("=", 1)[1]
+            if ad not in UCLAR:
+                print(f"bilinmeyen uc: {ad} (secenekler: {', '.join(UCLAR)})")
+                return 2
+            uclar = {ad: UCLAR[ad]}
     syms = semboller()
     bas = time.time()
-    print(f"perp-arsiv: {len(syms)} sembol · {gun} gun geri · periyot {PERIYOT}")
+    print(f"perp-arsiv: {len(syms)} sembol · {gun} gun geri · periyot {PERIYOT}"
+          f"{' · YALNIZ ' + list(uclar)[0] if uclar else ''}")
     print("⛔ dondurulmus dosyalara DOKUNULMAZ; yalniz perp-arsiv/ yazilir\n")
     top_eklenen, hatali = 0, []
     for i, sym in enumerate(syms, 1):
         try:
-            eklenen, toplam = sembol_arsivle(sym, gun)
+            eklenen, toplam = sembol_arsivle(sym, gun, uclar)
             top_eklenen += eklenen
             print(f"  [{i:2d}/{len(syms)}] {sym:<14} +{eklenen:<6d} toplam {toplam:,}")
         except RuntimeError as e:
