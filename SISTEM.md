@@ -803,8 +803,42 @@ taşımadığını **iki bağımsız yöntemle** gösterdi, B1'de son filtre ada
    ölçülmüş bir OLGU, ama zarar verdiği **kanıtlanmadı** ve kanıtlanmadan
    düzeltilmemeli. Madde 6'da tam olarak bu varsayım çürüdü.
 
-   **YAPILACAK (ön kayıt kapanınca): önce `ls_ratio`'yu loglamaya başla.**
-   Düzeltme değil, ÖLÇÜM açar — ileriye dönük test ancak öyle mümkün olur.
+   ~~**YAPILACAK (ön kayıt kapanınca): önce `ls_ratio`'yu loglamaya başla.**~~
+   ~~Düzeltme değil, ÖLÇÜM açar — ileriye dönük test ancak öyle mümkün olur.~~
+
+   ✅ **VERİ ARTIK VAR (2026-08-30).** Loglama gerekmedi: `perp_arsiv.py` (2026-08-26'da
+   zamanlandı) **aynı ucu** arşivliyor — `globalLongShortAccountRatio`, 5dk, 66 sembol.
+   Geri okuma kanıtlandı: API'den çekilen taze seri ile arşiv, örtüşen damgalarda
+   **808/808 birebir eşit** (fark 0,000000).
+
+   🔴 **AMA TEST YİNE KURULAMIYOR — bu kez SEBEP DEĞİŞTİ: veri değil, GÜÇ.**
+   Ölçüldü (2026-08-30):
+
+   | | ana sicil | radar |
+   |---|---|---|
+   | `ls_ratio` geri kurulabilen kapanmış işlem | 71/164 (%43) | 66/187 (%35) |
+   | görülebilen en küçük fark | **~0,97R** | **~0,95R** |
+   | madde 6'da ölçülen gerçek fark | \_ | **0,095R** |
+   | 0,095R'yi görmek için gereken işlem | **3.668** | 3.294 |
+   | ana sicilin üretim hızı (2,7 işlem/gün) ile | **~4 YIL** | — |
+
+   ⚠ **Yanlılık ayrıca var:** radar kolunda 91 sembolün **49'u arşivde yok** (arşiv
+   hacim liderlerini seçti) → likidite yanlılığı hipotezle etkileşebilir. Ana sicil
+   (11 sembolün 11'i arşivde) yalnız zaman yanlılığı taşır.
+
+   🔴🔴 **BUNUN MADDE 7'DEN BÜYÜK ANLAMI — K2 GÜNDEMİNİN TAMAMINI İLGİLENDİRİR:**
+   *"Zarar kanıtlanmadan düzeltme yapma"* kuralı, **işlem-bazlı R farkı** üzerinden
+   uygulandığında **yanlışlanamaz** hâle geliyor. Katkısı ~0,1R olan hiçbir skor
+   bileşeni bu defterle ne zararlı ne faydalı gösterilebilir — ne bugün, ne 2030'da.
+   Kural, bileşenleri sonsuza kadar dondurur.
+
+   ✅ **ÇIKIŞ YOLU — soruyu İŞLEME değil SİNYALE sor.** Bileşen sorusu ileri getiri
+   üzerinde, tüm sembol-saatlerde sorulursa örneklem işlem sayısına bağlı olmaz:
+   66 sembol × ~9.564 nokta ≈ **630.000 gözlem**. Bu, projeye 2026-08-25'te alınan
+   *"ham ileri getiri → ticaret mekaniği → portföy"* sırasının (bekleyen-isler 7.2)
+   madde 7'ye uygulanmış hâlidir. **Doğru sıra: önce sinyal aşaması.**
+   ⚠ Ve o aşamada bile hüküm ancak *sinyalde bilgi var mı* sorusunu cevaplar;
+   *"bileşeni çıkaralım mı"* kararı portföy aşamasını bekler.
 
    ⚠ **ŞİMDİ DÜZELTİLMEYECEK** — `squeeze_scores` değişirse koşan ön kayıt
    geçersiz olur (ON-KAYIT-radar-v2.md §6: "plan mekaniği değişirse iptal").
