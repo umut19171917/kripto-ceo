@@ -144,3 +144,93 @@ işlem başına iyi görünse bile portföyde kötü olabilir.
 
 `onkayit_giris.py` — **salt okur**. `onkayit_mekanik`'in veri yolunu ve
 `olcum.py`'nin çıkarım katmanını kullanır. Bu commit'ten SONRA yazılır.
+
+---
+
+# SONUÇ — **GİRİŞ MEKANİĞİ SUÇSUZ** (2026-09-01)
+
+**Örneklem:** 456 sinyal (üç kolu da kurulabilen) · 58 gün · 11 sembol.
+A kolu tetiklenme **%32,9** — B2 ile birebir aynı.
+
+## §6'nın karar kuralı devreye girdi
+
+```
+                      islem   ort net R        eslestirilmis fark (ayni sinyal)
+A KIRILIM (mevcut)     150     -0,327R         —
+B ANINDA  (kontrol)    456     -0,129R         B−A  -0,022R  GA [-0,190,+0,155]  p=0,8155
+C RASTGELE(plasebo)    456     -0,285R         C−A  -0,177R  GA [-0,324,-0,026]  p=0,0320
+```
+
+**Hüküm: ❌ giriş mekaniği suçsuz.** `|C−A| = 0,177R`, §5'in saptanabilirlik
+eşiği **0,241R**'nin altında.
+
+## ⚠ BEKLENTİM ÇÜRÜDÜ — ve TERS yönde
+
+§8'de yazmıştım: *"`C − A` pozitif çıkacak, yani ters seçilim bulacağımı
+bekliyorum."* **Çıkan işaret ters:** `C − A = −0,177R`, yani **kırılım girişi
+rastgele girişten İYİ.** Ters seçilim bulmadım; bulduğum şey (zayıf da olsa)
+kırılımın **koruyucu** olduğu yönünde.
+
+Bu, B2'nin *"stop koruyucudur"* bulgusuyla aynı aileden. §8'de kendi kendime
+yazdığım karşı argüman gerçekleşti: *"kırılım şartı da bir filtredir ve
+kötüleri eliyorsa A daha iyi çıkar."*
+
+## Ama "koruyucu" da DİYEMİYORUM — sağlamlık kesiyor
+
+`C−A`'nın GA'sı sıfırı dışlıyor ve p=0,032. Yine de bulgu sayılmaz:
+
+| kesit | C−A | GA95 | p |
+|---|---|---|---|
+| tümü | −0,177R | [−0,324, −0,026] | 0,032 |
+| **top-3 çıkarıldı** | **−0,067R** | [−0,233, +0,102] | **0,440** |
+| ilk yarı | −0,068R | [−0,334, +0,229] | 0,637 |
+| ikinci yarı | −0,251R | [−0,423, −0,071] | 0,011 |
+
+**Etki üç sembolde ve dönemin ikinci yarısında yoğunlaşmış.** Bu, projenin
+defalarca yazdığı yoğunlaşma arızasının ta kendisi. Ne "ters seçilim var"
+ne "kırılım koruyucu" denebilir.
+
+## 🔴 ASIL BULGU — filtre değer katmıyor da, yok da etmiyor
+
+En öğretici sayı `B − A = −0,022R` (p=0,82): **eşleştirilmiş farkta sıfır.**
+
+Ama işlem başına A **−0,327R**, B **−0,129R**. Çelişki değil:
+
+> **A, üç kat daha az işlem yapıp işlem başına daha çok kaybediyor; toplamda
+> aynı yere geliyor.** Kırılım filtresi değer katmıyor, değer yok da etmiyor —
+> yalnız **daha seyrek işlem yapıyor.**
+
+Bu, B2'nin *"kırılım girişi sinyallerin %67'sini eliyor"* gözleminin doğru
+okunuşudur: eleme **rastgeleye yakın**, seçici değil.
+
+## ⚠ YÖNTEMSEL DERS — bu tasarımda MEDYAN yanıltıcı
+
+Uç değer denetimi `B−A medyan = −1,025R` verdi; ortalama ise −0,022R.
+Sebep: A tetiklenmeyen **%67**'de tam olarak 0R katıyor, dolayısıyla farkın
+medyanı A'nın sıfır kütlesine oturuyor. **Eşleştirilmiş tasarımda sıfır kütlesi
+varsa medyan bir sağlamlık ölçütü değildir.** Kırpılmış ortalama (−0,041R)
+burada doğru robust ölçüttür ve ortalamayla uyumlu.
+
+📌 Bu, `olcum.py`'nin uç değer denetimine **eklenmesi gereken** bir şerh.
+
+## Ne değişti — ve `ters` hükmüne düşen şerh
+
+`ON-KAYIT-ters.md` hükmünde şöyle yazmıştım:
+> *"Kırılım girişi ham kenarı yiyor."*
+
+Bu ölçüm o cümleyi **SHORT kolu için desteklemiyor.** ⚠ Ama `ters`in iddiası
+**LONG kolu** (`swing_high` kırılımı) hakkındaydı ve o **hâlâ ölçülmedi**.
+Cümle çürütülmedi, **dayanaksız kaldı** — genel bir mekanik suçlaması olarak
+kullanılamaz.
+
+## Emir defteri adayı için sonuç (bu ölçümün asıl amacı)
+
+**Giriş mekaniği bozuk değil.** ~30 gün sonra emir defteri derinliği
+sınanırken mevcut mekanik kullanılabilir; onu değiştirmek için gerekçe yok.
+
+🔴 **Ama soru cevapsız kaldı:** B1'in ρ=+1,000'lik ham düzenliliği işleme
+çevrilince neden kayboluyor? Mekanik değilse, geriye iki ihtimal kalıyor —
+(a) ham düzenlilik zaten **yanlış yöndeydi** (B1 bunu gösterdi: skor↑ → fiyat↑,
+kural SHORT'luyor), (b) maliyet. Mutabakat ölçümünde görülen sayı ikincisini
+destekliyor: 352 gerçek pozisyonda brüt **−91 $**, komisyon **−327 $**.
+**Maliyet, brüt zararın 3,6 katı.** Bu ayrı bir ön kayıt hak ediyor.
