@@ -158,6 +158,39 @@ etiketinden ÖNCE bile +%15,6). "Düşen/testere rejim" tarifi 540 günlük *bac
 penceresine aitti ve canlı pencereye yanlışlıkla taşınmış. Sistem, **koşulların en
 elverişli olduğu dönemde** kaybetti.
 
+### 🔴 2026-08-31 — GEREKÇE İKİNCİ KEZ SINANDI: G1 ÇÜRÜDÜ, G2/G3/G4 GÜÇLENDİ
+
+Üç ön kayıtlı ölçüm koşuldu (*ham → mekanik → portföy*), üçü de aynı yönü gösterdi.
+Belgeler: `ON-KAYIT-skor-yonu.md` (`b01d493`) · `ON-KAYIT-mekanik.md` (`be56b77`) ·
+`ON-KAYIT-portfoy.md` (`317c8d0`).
+
+| | 23 Ağu'daki hâli | 31 Ağu ölçümünden sonra |
+|---|---|---|
+| **G1** *"eksik olan öngörü değil, MUHASEBE"* | pivotun ana dayanağı | 🔴 **ÇÜRÜDÜ.** Muhasebe artık tam: mekanik aşamada komisyon+slipaj+funding, portföy aşamasında risk tavanı ve bileşiklenme uygulandı. **Cevap yine negatif** (−0,327R/işlem · −%10,4 kasa). Eksik olan yalnız muhasebe değilmiş; **öngörü de eksik.** |
+| **G2** *"kanıtlanmış pozitif hücre yok"* | doğru | ✅ **Güçlendi** — üç aşamada da yok. |
+| **G3** *"sistem kaybeden yöne eğilimli"* | gözlem | ✅ **Mekanizmaya yükseldi.** Neden kaybeden yöne eğilimli olduğu artık biliniyor: **seçicinin kendisi ters sıralıyor** (ρ=+1,000). G3 bir eğilim değil, bir **sonuç**. |
+| **G4** *"hiçbir şey yapmamayı geçemiyor"* | ana gerekçe | ✅ **Güçlendi ve nicelendi.** Bu sinyal ailesinde: −%10,4 vs BTC +%30,2, üstelik **iki kat derin düşüşle**. |
+
+**Pivot kararına etkisi — dürüst okuma:**
+Pivotun *aletsel* amacı (**"ölçüyü düzelt"**) **fiilen gerçekleşti**: `pozisyon.py`,
+`panel.py`, ve 31 Ağustos'un üç aşamalı zinciri sayesinde artık maliyetiyle, portföy
+etkisiyle ve kıstasıyla ölçebiliyoruz. **Ama düzeltilmiş ölçü, cevabı değiştirmedi.**
+
+🔴 **Sonucu: §7'nin sırasında `bot.py` ADIMI ŞU AN DAYANAKSIZ.** Bot bir *taşıyıcıdır*;
+taşıyacak kanıtlanmış bir strateji yok ve elde olan çekirdek **ölçülmüş biçimde ters**.
+Bunu bilerek bot yazmak, ters sinyale teslimat mekanizması kurmak olur.
+
+⚖ **Karşı argüman (kayda geçiyor, çünkü zayıf değil):** kâğıt bot bir *altyapıdır* —
+bugüne kadarki her ölçüm **geriye dönük yeniden oynatmadır**; ileri zamanda gerçek
+mekanikle koşan bir bot **farklı ve daha güçlü** bir kanıt türü üretir. Bu argüman
+"şimdi yazalım" için geçerli olabilir; ama o zaman botun **hangi stratejiyi** koşacağı
+açıkça *"henüz yok, boş taşıyıcı"* diye yazılmalıdır — ters sinyali içine koymamak için.
+
+📌 **KARAR KULLANICIYA AİT.** Seçenekler ve önerim `bekleyen-isler-defteri.md` →
+YOL HARİTASI → KARARI BEKLEYENLER'de.
+
+---
+
 **Bundan sonraki tek geçerli kıstas:**
 > *Alıp tutmaktan daha iyisini yapmak — maliyetten sonra, daha az düşüşle.*
 
