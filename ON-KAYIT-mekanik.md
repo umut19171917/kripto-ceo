@@ -163,3 +163,92 @@ stop mu öldürdü?"* Sayım nicelikleri bunu cevaplar; ortalama R cevaplamaz.
 `onkayit_mekanik.py` — B1'in verisini ve indirilmiş 1h mumları okur,
 `trade_plan` mekaniğini birebir uygular, §4'ün niceliklerini **sırayla**
 basar. Salt okurdur. Ön kayıt commit'inden **sonra** yazılır, ayrı commit'lenir.
+
+---
+
+# SONUÇ — **STOP SUÇLU DEĞİL; SİNYAL ZATEN KAYBETTİRİYOR** (2026-08-31, `3d5df5a`)
+
+## Örneklem şerhi (önce bu)
+
+| | ön kayıt §3 | koşum |
+|---|---|---|
+| ham `LS ≥ 70` | 1.634 | **1.828** |
+| 12s cooldown sonrası | 473 | **502** |
+| tam pencereye sığan | 437 | **462** |
+| simüle edilen | — | **456** (6'sı dejenere plan → VETO) |
+
+**Fark neden:** §3'ün sayıları B1 veri setinden alınmıştı ve orada her
+gözlemin **+24s ileri eşleşmesi** şartı vardı (getiri hesabı için). Bu araç
+aynı kuralı **log'a doğrudan** uyguluyor; +24s eşleşme şartı yok, çünkü bu
+test 144 saatlik pencere istiyor. **Kural aynı, ara süzgeç farklı.**
+D/9 gereği kayda geçer; ölçütlere dokunulmadı.
+
+## Sonuçlar
+
+```
+A1. tetiklenme orani : 150/456 = %32,9
+A2. sonuc dagilimi   : stop 108 (%72) · tp1 29 (%19) · zaman_asimi 12 (%8) · tp2 1 (%1)
+B3. STOP olanlarin ufuk sonunda KARDA olacaklari : 29/108 = %26,9
+B4. TP'ye ulasanlarin ufukta ZARARA donecekleri  :  3/30  = %10,0
+C5. ortalama net R   : -0,327R   gun-kumeli GA95 [-0,573, -0,090]   (n=150, 34 gun)
+C6. STOPSUZ (ufuk sonu) : -0,885R   ->  STOPUN ETKISI +0,558R/islem
+```
+
+## 🔴 Asıl bulgu — beklentim ÇÜRÜDÜ
+
+**Stop bu sinyal ailesinde katil değil, KORUYUCU.** Aynı işlemler stopsuz
+tutulsaydı **−0,885R** olurdu; stopla **−0,327R**. Stop işlem başına
+**+0,558R kurtarıyor**.
+
+Bu, dış projenin vakasının **tam tersi**: orada stop gerçek bir kenarı
+öldürmüştü (+2,284 → gömüldü). Burada stop, kaybettiren bir sinyalin
+zararını yarıdan fazla kesiyor.
+
+**7.2'nin sorusuna cevap (bu sinyal ailesi için):** *"15 ölü adayın kaçı
+stopumuzun eseri?"* → En azından bu ailede **hiçbiri**. Sinyal ham hâliyle
+de kaybettiriyor; stop onu kurtarmıyor, batmasını yavaşlatıyor.
+
+## Ama stopun bir bedeli var
+
+**B3: stop olan 108 işlemin 29'u (%26,9) ufuk sonunda kârda olurdu.**
+Yani stop dörtte birden fazlasını erken kesiyor. Bu gerçek bir maliyet —
+sadece toplamda korumanın faydasından küçük.
+
+## İki aşama birbirini doğruluyor
+
+| | B1 (ham sinyal) | B2 (mekanik) |
+|---|---|---|
+| bulgu | LS ↑ → fiyat ↑ (ρ=+1,000) | SHORT işlemleri kaybediyor (−0,327R) |
+
+İkisi **aynı şeyi** söylüyor: skor SHORT derken piyasa yukarı gidiyor.
+B1 sinyalde gördü, B2 kasada gördü.
+
+⚠ **Ama mekanik zararın çoğunu emiyor:** sinyallerin yalnız **%32,9'u**
+tetikleniyor. Kırılım girişi (`swing_low`) sinyalin üçte ikisini **kazara**
+filtreliyor — fiyat yükseliyorsa SHORT hiç açılmıyor. Bu bir tasarım
+başarısı değil, **şanslı bir yan etki**; ama etkisi gerçek.
+
+## Sağlamlık (D7)
+
+Top-3 sembol (XRP, SOL, DOGE) çıkarılınca: tetiklenme %30,4 · stopun etkisi
+**+0,428R** (yön aynı) · net R −0,266R ama **GA95 [−0,594, +0,032] artık
+sıfırı kapsıyor**.
+→ **Yön sağlam, büyüklük birkaç sembole bağlı.** C5'in "sıfırı dışlıyor"
+niteliği tüm örneklemde geçerli, alt-örneklemde değil.
+
+## Güç şerhi (ayrılamaz)
+
+Sayım nicelikleri (A1/A2/B3/B4) iyi güçlendirilmiş. **C5'in GA'sı sıfırı
+dışlıyor ve etki (−0,327R) ilan edilen görülebilirlik eşiğinin (~0,32R)
+üstünde** — yani bu bulgu testin çözebildiği bölgede. C6'nın farkı
+(+0,558R) da öyle. Ama D7 gösteriyor ki büyüklük yoğunlaşmaya duyarlı.
+
+## Ne çıkarılmaz
+
+⛔ **"Stopu gevşetelim/sıkalım"** — bu test stop *çarpanını* taramadı, tek
+bir mekaniği ölçtü. Tarama yapmak eşik araması olurdu.
+⛔ **"Skoru tersine çevirelim"** — portföy aşaması (3. aşama) hâlâ yapılmadı:
+korelasyon, eşzamanlı maruziyet, düşüş. Ve ters çevirmek LONG üretir; LONG
+kolu (SS) bu projede **hiç güçlendirilmiş biçimde ölçülmedi** (n=85).
+⛔ **Diğer 14 adayın hükmü** — bu test **tek bir sinyal ailesini** ölçtü.
+Onların stop-suçluluğu ayrıca sorulmalı.
