@@ -146,3 +146,103 @@ fiyatından/tick'ten de gelebilir.
 
 `onkayit_maliyet.py` — **salt okur**. `defter.maliyet_R` ve `olcum.py`
 kullanılır; hiçbir hesap kopyalanmaz. Bu commit'ten SONRA yazılır.
+
+---
+
+# SONUÇ — **BAĞLAYICI KISIT MALİYET DEĞİL, BELİRSİZLİK** (2026-09-01)
+
+## ⚠ Önce bir düzeltme: §5'te gördüğüm brüt sayısı KİRLİYDİ
+
+§5'te *"ana sicil brüt +2,50R"* yazmıştım. **Yanlış.** O hesap geri-doldurma ve
+LAB kayıtlarını da içeriyordu; §3'ün dışladığı kayıtlar. Temiz örneklemde
+(n=158) **brüt −4,69R.**
+
+🔴 Ön kaydın §3'ü bu kayıtları **sonucu görmeden** dışlamıştı. Dışlamasaydım
+*"brüt pozitifti, maliyet yedi"* diye yanlış bir hikâye kurardım.
+
+## Ayrıştırma — iki sicil, ayrı
+
+```
+              n   BRUT toplam  MALIYET  NET      islem basina
+ANA SICIL   158    -4,69R      27,43R  -32,12R   brut -0,0297R · mal 0,1736R
+RADAR       187   -11,53R       5,22R  -16,75R   brut -0,0617R · mal 0,0279R
+```
+
+## §6'nın hükmü: **ikisinde de aynı satır**
+
+| | ANA SİCİL | RADAR |
+|---|---|---|
+| `taban_R` | **0,1736R** | **0,0279R** |
+| saptanabilir kenarın (0,354R) katı | 0,49× | 0,08× |
+| brüt GA95 | [−0,3487, +0,2818] | [−0,3149, +0,2096] |
+| işaret-permütasyon p | 0,8635 | 0,6556 |
+
+> ⚠ **BAĞLAYICI KISIT MALİYET DEĞİL BELİRSİZLİK:** maliyet ödenebilir
+> büyüklükte, ama kenarın **varlığı** gösterilemiyor.
+
+🔴 **Bu, "maliyeti düşürelim" fikrini de öldürüyor.** Maliyet **sıfır** olsaydı
+bile ana sicilde brüt −0,0297R/işlem ve GA'sı [−0,349, +0,282] — yani hâlâ
+hiçbir şey. Sorun ödediğimiz bedel değil, **karşılığında bir şey almıyor
+olmamız.**
+
+## 🔴 6 KAT MALİYET FARKI AÇIKLANDI — stop genişliği
+
+`ρ(stop_pct, maliyet_R)` ana sicilde **−0,970**, radarda **−0,977**.
+Mekanik doğrulandı: maliyet ∝ 1/stop genişliği.
+
+| | stop_pct medyan | taban_R |
+|---|---|---|
+| ANA SİCİL | **%1,65** | 0,1736R |
+| RADAR | **%7,69** | 0,0279R |
+
+Stop genişliği **4,7 kat** farklı, maliyet **6,2 kat**. §8'de yazdığım
+*"farkın tamamının stop genişliğinden gelmesini beklemiyorum"* şerhi tuttu —
+büyük kısmı oradan, tamamı değil.
+
+**Sebep basit:** ana sicil 11 majör coini 1 saatlik dilimde işliyor; 2,5 ATR
+stop, düşük oynaklıklı bir coinde fiyatın **%1,65'i** kadar dar oluyor.
+Komisyon fiyatın sabit bir oranı olduğu için, R cinsinden maliyet patlıyor.
+
+📌 **Kullanılabilir sonuç:** bir kenar bulunursa **radar daha ucuz taşıyıcı**.
+Radar'ın tabanı (0,0279R) projenin gürültü tabanının (0,03R) **altında** —
+yani radar için maliyet fiilen ihmal edilebilir.
+
+## Maliyet dağılımı çarpık — ama hükmü değiştirmiyor
+
+Ana sicil: ortalama 0,1736R, **medyan 0,0738R** (2,4 kat), en pahalı %10 toplam
+maliyetin **%37,5**'ini oluşturuyor. En pahalı %10 çıkarılınca taban 0,1207R'ye
+iniyor — **yarıya inmiyor**, o yüzden §6'nın *"birkaç işlemin eseri"* satırı
+tetiklenmedi. Yine de dürüst okuma: **tipik işlem 0,07R öder, pahalı kuyruk
+ortalamayı 0,17R'ye çekiyor.**
+
+## Dönem kırılımı — kayda geçiyor, hüküm doğurmuyor
+
+| | ilk yarı | ikinci yarı |
+|---|---|---|
+| ANA taban_R | 0,2416R | 0,0738R |
+| ANA brüt | −0,1006R | +0,0745R |
+
+Maliyet ikinci yarıda **üçte bire** düşmüş (stoplar genişlemiş — oynaklık artışı).
+📌 Bu **bulgu değildir**: iki alt-örneklemin hiçbirinde GA hesaplanmadı ve
+dönem ikiye bölme **sonuç görüldükten sonra** anlamlandırılırsa post-hoc olur.
+
+## 🔴 ÜRETİLEN EŞİK — her gelecek ön kayda girer
+
+| sicil | `taban_R` | anlamı |
+|---|---|---|
+| **ANA SİCİL** | **0,1736R** | gürültü tabanının **5,8 katı** |
+| **RADAR** | **0,0279R** | gürültü tabanının **0,9 katı** |
+
+**Bundan sonra:** bir aday *"bilgi var"* dese bile, bulduğu kenar ilgili sicilin
+`taban_R`'sinin altındaysa **mekanik aşamasına geçilmez.** Bu, `ON-KAYIT-SABLON.md`
+§6'ya girecek bir şarttır.
+
+⛔ *"Stop'u genişletelim, maliyet düşer"* **hâlâ yasak.** Bu ölçüm stop
+genişliğinin **maliyete** etkisini gösterdi; **brüt**e etkisini göstermedi.
+Geniş stop daha az maliyet ama daha çok zarar da olabilir. O ayrı bir ön kayıt.
+
+## Beklentim tuttu
+
+§8'de *"`taban_R` > 0,354R çıkmasını beklemiyorum, beklentim 'maliyet ödenebilir
+ama kenar gösterilemiyor' satırı"* yazmıştım. **Gerçekleşen tam olarak bu.**
+İki oturumda ilk kez beklentim çürümedi.
