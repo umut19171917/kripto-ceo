@@ -68,6 +68,31 @@ def test_kumesi(t0):
     return sorted(tum)
 
 
+_ELENEN_YOL = os.path.join(ONBELLEK, "_elenen.json")
+_elenen_kume = None
+
+
+def _elenen():
+    global _elenen_kume
+    if _elenen_kume is None:
+        try:
+            _elenen_kume = set(json.load(open(_ELENEN_YOL, encoding="utf-8")))
+        except Exception:
+            _elenen_kume = set()
+    return _elenen_kume
+
+
+def _elenen_ekle(sym):
+    _elenen().add(sym)
+    try:
+        os.makedirs(ONBELLEK, exist_ok=True)
+        gecici = _ELENEN_YOL + ".tmp"
+        json.dump(sorted(_elenen_kume), open(gecici, "w", encoding="utf-8"))
+        os.replace(gecici, _ELENEN_YOL)
+    except Exception:
+        pass
+
+
 def sembol_verisi(sym, t0, t1):
     """Gunluk bar + funding. Doner: [(gun_ms, acilis, kapanis)], [(ft, oran)]"""
     os.makedirs(ONBELLEK, exist_ok=True)
@@ -78,9 +103,15 @@ def sembol_verisi(sym, t0, t1):
             return j["bar"], j["fund"]
         except Exception:
             pass
+    # 🔴 ELENENLERI DE ONBELLEKLE: aday havuz 515, gecen 132. Elenen ~380
+    # sembol her kosumda yeniden sorgulaniyordu ve sure oradan sisiyordu.
+    # Bu yalniz AG tasarrufudur; hangi sembolun elendigi ayni olcutle belirlenir.
+    if sym in _elenen():
+        return None, None
     k = _ist("/fapi/v1/klines", {"symbol": sym, "interval": "1d",
                                  "startTime": t0, "limit": 1500})
     if not k or len(k) < MIN_GUN:
+        _elenen_ekle(sym)
         return None, None
     bar = [[int(x[0]), float(x[1]), float(x[4])] for x in k]
     fund, t = [], t0
@@ -169,19 +200,37 @@ def cikarim(G):
     boot.sort()
     ga = (boot[int(0.025 * len(boot))], boot[int(0.975 * len(boot))])
 
-    # gun ICI etiket permutasyonu
-    bloklar = [[(x["bant"], x["ileri"]) for x in v] for v in gunler.values()]
+    # --- gun ICI etiket permutasyonu ---
+    # 🔴 HIZ NOTU (2026-09-01, ilk kosum 1,5 saat surecekti): etiketleri
+    # karistirip butun gozlemleri gezmek tur basina 184 bin Python adimi
+    # ediyordu (4.000 tur = 736 milyon). MATEMATIKSEL OLARAK OZDES ama C
+    # seviyesinde calisan bicim: gun icinde etiket karistirmak, o gunun
+    # getirilerinden UC SAYISI KADARINI rastgele secmekle AYNI SEYDIR.
+    # Secim `random.sample`, toplama `sum` -> ikisi de C.
+    # Olcut/esik/istatistik DEGISMEDI; yalniz ayni sonuca daha az adimda
+    # varilyor. ⚠ Rastgele cekilis sirasi degistigi icin p'nin son
+    # basamaklari ilk surumden farkli cikar — Monte Carlo gurultusudur.
+    bloklar = []
+    for v in gunler.values():
+        deger = [x["ileri"] for x in v]
+        k = sum(1 for x in v if x["bant"] in (0, BANT - 1))
+        if 0 < k < len(deger):
+            bloklar.append((deger, k, sum(deger), len(deger)))
+        elif deger:                       # gunun tamami tek grupta
+            bloklar.append((deger, k, sum(deger), len(deger)))
+    ornekle = r.sample
     sifir = []
     for _ in range(TUR):
-        su = cu = so = co = 0
-        for blok in bloklar:
-            etik = [b for b, _ in blok]
-            r.shuffle(etik)
-            for e, (_, v) in zip(etik, blok):
-                if e in (0, BANT - 1):
-                    su += v; cu += 1
-                else:
-                    so += v; co += 1
+        su = 0.0; cu = 0; so = 0.0; co = 0
+        for deger, k, toplam, nn in bloklar:
+            if k <= 0:
+                so += toplam; co += nn
+            elif k >= nn:
+                su += toplam; cu += nn
+            else:
+                s = sum(ornekle(deger, k))
+                su += s; cu += k
+                so += toplam - s; co += nn - k
         if cu and co:
             sifir.append(su / cu - so / co)
     p = (sum(1 for x in sifir if abs(x) >= abs(gozlenen)) + 1) / (len(sifir) + 1)
