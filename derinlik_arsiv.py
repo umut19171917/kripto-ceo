@@ -230,11 +230,32 @@ def durum():
         cubuk = "█" * int(round(12 * n / en_cok)) if n else ""
         print(f"  {s:02d}:00 {n:5d} {cubuk}{'  <- BOS' if not n else ''}")
     print(f"\n  24 saatin {kapsanan}'i kapsandi.")
+
+    # 🔴 DENGESIZLIK DENETIMI (2026-09-01): kullanici gunde <=45 dk makineyi
+    # kapatmak zorunda. Kayip MIKTARI onemsiz (%3,1) ama DAGILIMI onemli:
+    # hep AYNI saatte kapatilirsa o UTC saati sistematik olarak eksik kalir.
+    # Bos saat beklemiyoruz artik; YETERSIZ saati yakalamak gerekiyor.
+    dolu = [n for n in saatler.values() if n]
+    if kapsanan >= 3 and dolu:
+        ortanca = sorted(dolu)[len(dolu) // 2]
+        zayif = [(s, saatler.get(s, 0)) for s in range(24)
+                 if kapsanan == 24 and saatler.get(s, 0) < 0.5 * ortanca]
+        if zayif:
+            print(f"  ⚠ YETERSIZ SAATLER (medyanin yarisindan az, medyan {ortanca}):")
+            for s, n in zayif:
+                print(f"     {s:02d}:00 -> {n} snapshot  (medyan {ortanca})")
+            print("     Sebep: makine hep AYNI saatte mi kapaniyor? Kapatma saatini")
+            print("     degistirmek bu dengesizligi tamamen ortadan kaldirir.")
+        elif kapsanan == 24:
+            print("  ✅ 24 saatin hepsi dengeli kapsandi — faz kilidi riski YOK.")
+
     if kapsanan < 24:
         print("  🔴 FAZ KILIDI RISKI: kapsanmayan saatler var. Makine o saatlerde")
         print("     kapali/uykuda demektir. Bu, orneklemi PIYASA SEANSINA gore")
         print("     secer (Asya/Avrupa/ABD). On kayit yazilirken bu sayilarla")
         print("     birlikte degerlendirilmeli; gizlenirse olcum gecersizdir.")
+        print("  📌 Funding takas saatleri (UTC 00/08/16 = yerel 03/11/19) ozellikle")
+        print("     onemli: likidasyon kaskadlari orada olur. Sistematik kacirilmamali.")
 
 
 def main():
