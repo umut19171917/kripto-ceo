@@ -159,3 +159,79 @@ Mekanizma makul; sorun büyüklüğünün ölçülebilir olup olmadığı.
 `onkayit_ucesik.py` — **salt okur**. `olcum.py` çıkarım katmanını kullanır.
 İndirilen veri `_cache/ucesik/` altına yazılır (gitignore'lu).
 Bu commit'ten SONRA yazılır, AYRI commit'lenir.
+
+---
+
+# SONUÇ — **UÇLARDA DA BİLGİ YOK** (2026-09-01)
+
+**Test kümesi:** 132 sembol · **183.972 sembol-gün** · 1.460 takvim günü.
+🔴 **Keşif kümesi sızıntısı: 0** — §9'un geçersizlik şartı temiz.
+
+## §6'nın karar kuralı
+
+```
+  bant ortalamalari: +0,132%  -0,019%  +0,001%  -0,050%  -0,029%
+  uc_orta = +0,074%
+  [1] gun-kumeli bootstrap GA95 : [-0,128%, +0,266%]   (1.460 gun)
+  [2] gun-ici permutasyon       : p = 0,2229
+```
+
+**❌ UÇLARDA DA BİLGİ YOK.** GA sıfırı **kapsıyor**, p=0,22.
+Gözlenen +0,074%, §5'in saptanabilirlik eşiği %0,367'nin **beşte biri**.
+
+**Sağlamlık:** ilk yarı +0,170% (p=0,44) · ikinci yarı +0,060% (p=0,18).
+İki dönem de aynı yerde.
+
+## ✅ KONTROL KOLU TASARIMI DOĞRULADI — ilk kez
+
+Rastgele atanmış bant etiketleriyle: `uc_orta = −0,023%`,
+GA [−0,071%, +0,027%], **p=0,6546**. Yani bu tasarım **kendi başına pozitif
+üretmiyor.** §6'nın *"kontrol kolu da geçerse TASARIM HATASI"* satırı
+tetiklenmedi.
+
+📌 Madde 8.2 (kontrol grubu zorunlu) bu sabah kapatılmıştı; **ilk gerçek
+kullanımında işini gördü.**
+
+## 🔴 U BİÇİMİ REPLİKE OLMADI — asıl bulgu bu
+
+`basis`in keşif kümesinde funding bantları **U biçimliydi** (uçlar ortadan
+yüksek, ρ=+0,300). Test kümesinde çıkan desen **başka**:
+
+| | keşif kümesi (`basis`, 10 sembol) | test kümesi (132 sembol) |
+|---|---|---|
+| desen | **U biçimi** (uçlar yüksek) | **monotonik azalan** |
+| Spearman ρ | +0,300 | **−0,800** |
+| uç bant farkı | +0,025% | −0,162% |
+| anlamlı mı | hayır | hayır |
+
+**Farklı varlıklarda farklı desen, ikisi de anlamsız.** Bu, U biçiminin
+gürültü olduğunun en doğrudan kanıtıdır — post-hoc bir gözlemin başka veride
+tutmaması.
+
+⚠ Test kümesindeki ρ=−0,800 da **bulgu değildir**: uç bant farkı −0,162%,
+güven aralığının içinde ve §6 monotonik istatistiği ana ölçüt olarak
+tanımlamıyor. Post-hoc bir deseni ikinci kez kovalamak, ilk hatanın tekrarı olur.
+
+## Madde 6 (funding eşiği) → **EMEKLİLİK ADAYI**
+
+§7'nin karmaşıklık bütçesi devreye girdi:
+
+> *"Kalırsa: Madde 6 **emeklilik adayı** olur ve kural sayısı **azalabilir**."*
+
+Madde 3.2'nin iki parçası artık kapandı:
+- **Mekanizma çalışıyor** (SHORT payı %76,1 vs %47,6, p<0,00001) — ölçülmüştü
+- **Ama taşıdığı bilgi yok** — bu ölçüm
+
+Yani kural **tasarlandığı gibi ateşliyor ama ateşlemesinin bir değeri yok.**
+
+⚠ **Emeklilik adayı ≠ emekli.** Kuralı canlıdan çıkarmak ayrı bir karardır ve
+kullanıcıya aittir. Aciliyeti de düşük: skorun bütünü zaten ölçülmüş biçimde
+ters (`b01d493`), bir bileşenini çıkarmak o gerçeği değiştirmez.
+
+## Beklentim tuttu
+
+§8'de *"bulamayacağımızı bekliyorum, çünkü `basis`teki U genliği güven
+aralığının içindeydi"* yazmıştım. Tuttu. §8'de zayıf olduğunu **kendim
+belirttiğim** karşı argüman (U'nun üç kolda birden görünmesi) da haklı
+çıkmadı — nitekim orada *"bu üç kol aynı veriden geliyor, yani bir gözlemdir"*
+diye şerh düşmüştüm.
