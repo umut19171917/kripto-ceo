@@ -137,6 +137,25 @@ def gonder(text):
     Suzgec tarafindan susturulan mesaj: log'a yazilir, Telegram'a GITMEZ,
     ve `True` doner (bkz. yukaridaki uyari)."""
     global _son_hata_log
+    # 🔴 GENEL SESSIZ ANAHTARI (2026-09-01, kullanici karari) --------------------
+    # telegram.json'da "sessiz": true ise HICBIR mesaj Telegram'a gitmez.
+    #
+    # NEDEN: skorun kendisi olculmus bicimde TERS calisiyor (b01d493). Telefona
+    # dusen "SHORT kurulumu" mesajlari, guvenmedigimiz bir seciciden geliyor.
+    # Kullanici bunlara bakarak islem yapmamali; bildirim gereksiz baski yaratiyor.
+    #
+    # 🔴 NEDEN `True` DONUYOR — bu satir kritiktir: radar.py'de sirasi soyle
+    #   radar_defter.kaydet(...)  ->  bildir(...)  ->  durum["kurulum_alarmlar"]=simdi
+    # `bildir` HATA FIRLATIRSA tekrar-damgasi konmaz ve AYNI kurulum 2 saat sonra
+    # YENIDEN kaydedilir -> SICIL BOZULUR ve kosan ON-KAYIT-radar-tavan sayaci
+    # sisirilir. `True` donmek akisi aynen surdurur: KAYIT DEVAM EDER, yalniz
+    # mesaj gitmez. Test bu yuzden etkilenmez.
+    #
+    # Geri acmak: telegram.json'da "sessiz" -> false (KOD DEGISIKLIGI GEREKMEZ).
+    c0 = _conf()
+    if c0 and c0.get("sessiz"):
+        olcucu.log_line(f"[BILDIRIM] SESSIZ mod: {text.splitlines()[0][:60]}")
+        return True
     gecer, t = gecer_mi(text)
     if not gecer:
         olcucu.log_line(f"[BILDIRIM] susturuldu ({t}): {text.splitlines()[0][:60]}")
