@@ -703,8 +703,15 @@ Gosterilen her dolar rakami <b>varsayimsal</b>.<br>
 calkantida gercek dolum daha kotu olur.<br>
 · <b>MMR (surdurme teminat orani) tahmindir</b> — %{MMR*100:g} varsayildi, muhafazakar
 (likidasyonu girise YAKLASTIRIR). Kesin deger imzali Binance ucu ister.<br>
-· <b>Funding dahil DEGIL</b> — kapanmis islemlerin maliyeti komisyon+kayma;
-funding odemeleri yalniz <code>pozisyon.py</code> simulatorunde modelli.<br>
+· <b>Funding dahil DEGIL</b> — kapanmis islemlerin maliyeti yalniz komisyon+kayma
+(<code>defter.maliyet_R</code>). <b>Buyuklugu OLCULDU (2026-09-11):</b> medyan elde
+tutma 19,8 saat (%43'u 24 saatten uzun) ve gercek |funding oranı| medyani
+%0,005/8sa -> <b>~2-4R</b> mertebesinde, yani net kaybin <b>%8-15'i</b>.
+🔴 <b>ISARETI BILINMIYOR</b>: bu bir buyukluk, yon degil — gercek sonuc
+−25R ile −29,5R arasinda. Funding'in isareti <b>rejime degil SEMBOLE</b> baglidir
+(olculdu: 16 radar LONG'u funding ALDI, odemedi). Formul:
+<code>oran × (sure/8sa) / stop_pct</code> — komisyon gibi <b>stop daraldikca
+buyur</b>, o yuzden ANA sicil radardan islem basina daha cok oder.<br>
 · <b>Net $ bilesik DEGIL</b>: her islem baslangic sermayesinin %1'i ile ayri
 hesaplandi. Bilesik bakiye <code>panel.py</code>'de var ve orada "sirali islem
 varsayar" diye etiketli — burada ikinci kez basilmadi.<br>
