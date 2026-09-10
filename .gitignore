@@ -62,3 +62,6 @@ derinlik-arsiv.log
 
 # 2026-09-01: otomatik baslatma nobetcisinin logu
 otomatik-baslat.log
+
+# 2026-09-10: canli portfoy ekraninin uretilen HTML ciktisi (portfoy.py yeniden uretir)
+portfoy.html
