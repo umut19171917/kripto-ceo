@@ -65,3 +65,6 @@ otomatik-baslat.log
 
 # 2026-09-10: canli portfoy ekraninin uretilen HTML ciktisi (portfoy.py yeniden uretir)
 portfoy.html
+
+# 2026-09-10: portfoy ekraninin al-tut kiyas onbellegi (portfoy.py --hizli okur)
+portfoy-kiyas.json

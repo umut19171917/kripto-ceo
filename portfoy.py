@@ -454,18 +454,85 @@ function kaldSec(k){
     b.classList.toggle("aktif", parseFloat(b.dataset.k)===k);
   acikCiz();
 }
+// ================== ayarlari HATIRLA ==================
+// Sayfa kendini yenilediginde sermaye/kaldirac/sekme/kaydirma KAYBOLMASIN.
+const AY = "portfoy.ayar";
+function ayarKaydet(){
+  try{
+    localStorage.setItem(AY, JSON.stringify({
+      bakiye, kald,
+      sekme: document.getElementById("bolum-kapali").classList.contains("gizli")
+             ? "acik" : "kapali",
+      kaydir: window.scrollY,
+      f_sicil: document.getElementById("f-sicil").value,
+      f_durum: document.getElementById("f-durum").value,
+      f_ara: document.getElementById("f-ara").value,
+      f_gd: document.getElementById("f-gd").checked,
+      f_dn: document.getElementById("f-dn").checked,
+      f_tt: document.getElementById("f-tt").checked,
+    }));
+  }catch(e){}
+}
+function ayarGeriYukle(){
+  let a = null;
+  try{ a = JSON.parse(localStorage.getItem(AY) || "null"); }catch(e){}
+  if(!a) return null;
+  if(isFinite(a.bakiye) && a.bakiye > 0){
+    bakiye = a.bakiye; document.getElementById("bakiye").value = a.bakiye;
+  }
+  if(isFinite(a.kald) && a.kald > 0) kald = a.kald;
+  for(const b of document.querySelectorAll(".kbtn button"))
+    b.classList.toggle("aktif", parseFloat(b.dataset.k) === kald);
+  const g = (id,v)=>{ if(v!=null) document.getElementById(id).value = v; };
+  g("f-sicil", a.f_sicil); g("f-durum", a.f_durum); g("f-ara", a.f_ara);
+  const c = (id,v)=>{ if(v!=null) document.getElementById(id).checked = v; };
+  c("f-gd", a.f_gd); c("f-dn", a.f_dn); c("f-tt", a.f_tt);
+  return a;
+}
+
+// ================== baglamalar ==================
 document.getElementById("bakiye").addEventListener("input", e=>{
   const v = parseFloat(e.target.value);
-  if(isFinite(v) && v>0){ bakiye = v; acikCiz();
+  if(isFinite(v) && v>0){ bakiye = v; acikCiz(); ayarKaydet();
     if(!document.getElementById("bolum-kapali").classList.contains("gizli")) kapaliCiz(); }
 });
 for(const id of ["f-sicil","f-durum","f-gd","f-dn","f-tt"])
-  document.getElementById(id).addEventListener("change", kapaliCiz);
-document.getElementById("f-ara").addEventListener("input", kapaliCiz);
+  document.getElementById(id).addEventListener("change", ()=>{kapaliCiz(); ayarKaydet();});
+document.getElementById("f-ara").addEventListener("input", ()=>{kapaliCiz(); ayarKaydet();});
 
+// ================== veri yasi + OTOMATIK YENILEME ==================
+// 🔴 Sayfa file:// ile acildigi icin defter dosyalarini OKUYAMAZ (tarayici
+//    guvenlik kisiti). Bu yuzden "yeni sinyal geldi mi" diye bakamaz.
+//    Cozum: portfoy.py'yi zamanlanmis gorev tazeler, sayfa da kendini yeniler.
+const URETIM = new Date(__URETIM__);
+function yasGoster(){
+  const dk = (Date.now() - URETIM.getTime()) / 60000;
+  const e = document.getElementById("veri-yasi");
+  if(!e) return;
+  e.textContent = dk < 1.5 ? "veri taze" : `veri ${Math.round(dk)} dk once uretildi`;
+  e.className = dk > 8 ? "z" : dk > 4 ? "" : "n";
+}
+yasGoster();
+setInterval(yasGoster, 20000);
+
+const a0 = ayarGeriYukle();
 acikCiz();
+if(a0 && a0.sekme === "kapali") sekmeSec("kapali");
+if(a0 && a0.kaydir) window.scrollTo(0, a0.kaydir);
 fiyatCek();
 setInterval(fiyatCek, 5000);
+
+// Sayfayi 2 dakikada bir yenile -> zamanlanmis gorevin urettigi TAZE dosya gelir.
+// Yazi yazarken/secim yaparken yenilemez; ayarlar localStorage'da korunur.
+setInterval(()=>{
+  const o = document.activeElement;
+  if(o && (o.tagName === "INPUT" || o.tagName === "SELECT")) return;
+  if(window.getSelection && String(window.getSelection())) return;
+  ayarKaydet();
+  location.reload();
+}, 120000);
+
+window.addEventListener("beforeunload", ayarKaydet);
 """
 
 
@@ -476,6 +543,8 @@ def _html(acik, kapali, fiyat0, kiyas, ilk_tarih, ozet):
             .replace("__ACIK__", json.dumps(acik, ensure_ascii=False))
             .replace("__KAPALI__", json.dumps(kapali, ensure_ascii=False))
             .replace("__FIYAT0__", json.dumps(fiyat0))
+            .replace("__URETIM__", json.dumps(
+                datetime.now(timezone.utc).isoformat(timespec="seconds")))
             .replace("__STOP_MED__", repr(stop_med)))
 
     if kiyas:
@@ -496,7 +565,8 @@ def _html(acik, kapali, fiyat0, kiyas, ilk_tarih, ozet):
 <h1>PORTFOY <span style="font-weight:400;color:var(--soluk)">— {ozet['acik_n']} acik ·
 {ozet['kapali_n']} kapanmis islem</span></h1>
 <div class="alt">uretim: {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC ·
-<span id="canli-durum"></span> · 🔴 GERCEK PARA YOK, EMIR GONDEREN KOD YOK</div>
+<span id="veri-yasi"></span> · <span id="canli-durum"></span> ·
+sayfa 2 dk'da bir kendini yeniler · 🔴 GERCEK PARA YOK, EMIR GONDEREN KOD YOK</div>
 
 <div class="kutu kiyas"><h3>Ayni donemde hicbir sey yapmasaydin (zorunlu kiyas · G4)</h3>
 {kiyas_html}
@@ -649,14 +719,42 @@ seviyesine hic degmedi, kar/zarari yok. Varsayilan olarak <b>disaridadir</b>.
 """
 
 
+KIYAS_ONBELLEK = KOK / "portfoy-kiyas.json"
+
+
+def _kiyas_onbellekli(ilk, hizli):
+    """--hizli: agdan CEKME, onbellekten oku (al-tut yavas degisir).
+    Tam kosum: yeniden hesapla ve onbellegi tazele."""
+    if hizli and KIYAS_ONBELLEK.exists():
+        try:
+            return json.loads(KIYAS_ONBELLEK.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    if hizli:
+        return None
+    k = _al_tut(ilk)
+    if k:
+        try:
+            olcucu.atomik_yaz(KIYAS_ONBELLEK, k)
+        except Exception:
+            pass
+    return k
+
+
 def main():
-    print("portfoy.py — canli portfoy ekrani")
+    import sys
+    hizli = "--hizli" in sys.argv
+    print(f"portfoy.py — canli portfoy ekrani{' (HIZLI: ag yok)' if hizli else ''}")
     acik, kapali = _yukle()
     print(f"  acik: {len(acik)}  ·  kapanmis kayit: {len(kapali)}")
 
-    fiyat0 = _fiyatlar([r["token"] for r in acik])
-    alinan = sum(1 for v in fiyat0.values() if v)
-    print(f"  uretim ani fiyati alinan sembol: {alinan}/{len(fiyat0)}")
+    # 🔴 --hizli'da fiyat CEKILMEZ: sayfa Binance'ten kendisi canli cekiyor,
+    #    gomulu fiyatlar yalnizca cevrimdisi yedegi. Zamanlanmis gorev bu modda
+    #    kosar -> API yuku SIFIR, uretim ~anlik.
+    fiyat0 = {} if hizli else _fiyatlar([r["token"] for r in acik])
+    if not hizli:
+        alinan = sum(1 for v in fiyat0.values() if v)
+        print(f"  uretim ani fiyati alinan sembol: {alinan}/{len(fiyat0)}")
 
     tetik = [r for r in kapali if r["tetiklendi"]]
     temiz = [r for r in tetik if not r["geri_doldurma"] and not r["deneysel"]]
@@ -673,9 +771,10 @@ def main():
     print(f"  temiz kume net: {net_top:+.2f}R  ·  radar stop medyani %{stop_med:.2f}")
 
     ilk = min((r["tarih"][:10] for r in kapali + acik if r["tarih"]), default="2026-06-28")
-    kiyas = _al_tut(ilk)
+    kiyas = _kiyas_onbellekli(ilk, hizli)
     if kiyas:
-        print(f"  BTC al-tut ({ilk} -> bugun): {kiyas['getiri_pct']:+.1f}%")
+        print(f"  BTC al-tut ({ilk} -> bugun): {kiyas['getiri_pct']:+.1f}%"
+              f"{' [onbellek]' if hizli else ''}")
 
     CIKTI.write_text(_html(acik, kapali, fiyat0, kiyas, ilk, ozet), encoding="utf-8")
     kb = CIKTI.stat().st_size / 1024
