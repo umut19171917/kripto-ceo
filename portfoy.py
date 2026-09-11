@@ -302,6 +302,13 @@ function acikCiz(){
   document.getElementById("t-risk").textContent = "$"+f(tRisk);
   document.getElementById("t-not").textContent = "$"+f(tNot);
   document.getElementById("t-tem").textContent = "$"+f(tTem);
+  // 🔴 Sayilar AYRI yazilir: sekmedeki toplam ile ust tablonun satir sayisi
+  // farkli olduğu icin kullanici hakli olarak "20 yaziyor ama listede az" dedi.
+  document.getElementById("b-izl").textContent = izl.length + " pozisyon";
+  document.getElementById("b-bek").textContent = bek.length + " kayit";
+  document.getElementById("s-acik").textContent =
+    (izl.length + bek.length) + " = " + izl.length + " poz + " + bek.length + " bekleyen";
+
   hesapOzeti(tPnl, izl.length);
 
   // --- KAPASITE: pozisyonlar sermayeye siginiyor mu ---
@@ -619,11 +626,15 @@ zaten yanlis, o yuzden burada ikinci kez basilmadi.</div></div>
 <div class="kutu" id="kapasite"></div>
 
 <div class="sekme">
-<button id="sekme-acik" class="aktif" onclick="sekmeSec('acik')">ACIK ({ozet['acik_n']})</button>
+<button id="sekme-acik" class="aktif" onclick="sekmeSec('acik')">ACIK (<span id="s-acik">{ozet['acik_n']}</span>)</button>
 <button id="sekme-kapali" onclick="sekmeSec('kapali')">KAPANMIS ({ozet['kapali_n']})</button>
 </div>
 
 <div id="bolum-acik">
+  <h3 style="color:var(--yazi);font-size:13px;margin:0 0 6px">
+  TETIKLENMIS POZISYONLAR — <span id="b-izl">—</span>
+  <span class="serh" style="font-weight:400">· fiyat girise degdi, risk BAGLI,
+  teminat AYRILDI, PNL ISLIYOR</span></h3>
   <div class="serh" style="margin-bottom:8px">
   <b>ima</b> = pozisyon buyuklugu / sermaye (sistemin GERCEK deger; kaldirac degil).
   <b>teminat</b> ve <b>likidasyon</b> yukaridaki kaldirac dugmesine gore degisir —
@@ -642,8 +653,10 @@ zaten yanlis, o yuzden burada ikinci kez basilmadi.</div></div>
   <div><label class="serh">Bagli teminat</label><div class="buyuk" style="font-size:15px" id="t-tem">—</div></div>
   </div></div>
 
-  <h3 style="color:var(--soluk);font-size:12px;margin:16px 0 6px">BEKLEMEDE —
-  giris fiyatina deginmedi, risk BAGLANMADI, teminat AYRILMADI</h3>
+  <h3 style="color:var(--yazi);font-size:13px;margin:18px 0 6px">
+  BEKLEMEDE — <span id="b-bek">—</span>
+  <span class="serh" style="font-weight:400">· fiyat girise HIC degmedi, risk
+  BAGLANMADI, teminat AYRILMADI, PNL YOK. Yukaridaki toplamlara GIRMEZ.</span></h3>
   <div class="tablo-sar"><table><thead><tr>
   <th class="sol">sicil</th><th class="sol">coin</th><th class="sol">yon</th>
   <th>giris</th><th>ANLIK</th><th>stop</th><th>uzaklik</th><th class="sol">acilis</th>
